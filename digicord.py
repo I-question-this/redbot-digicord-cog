@@ -40,6 +40,12 @@ class Digicord(commands.Cog):
 
 
     async def spawn_digimon(self, channel:discord.TextChannel):
+        # Get proper spawn channel
+        channel_id = await self._conf.guild(channel.guild).spawn_channel()
+        if channel_id is not None:
+            channel = self.bot.get_channel(channel_id)
+
+        # Send the data
         contents = dict(
                 title="A Wild Digimon has Appeared!",
                 description="Not really, but maybe in the future!"
