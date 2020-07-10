@@ -34,12 +34,49 @@ class Stage(Enum):
 
 
 
-class Digimon:
-    def __init__(self, name:str, number:int, stage:Stage,
-            nickname:str=None, level:int=None):
+class Species:
+    def __init__(self, name:str, number:int, stage:Stage):
         self.name = name
         self.number = number
         self._stage_enum = stage
+
+
+    def __repr__(self):
+        """Returns the representation of this Species.
+        The representation is a string, that if executed
+            as Python code would recreate this object.
+        This requires that the object be set up to have no
+            values saved beyond what can be derived from the
+            parameters in it's constructor method.
+        Returns
+        -------
+        str:
+            A string of Python code that if executed would 
+                recreate this object.
+        """
+        r = f"{self.__class__.__name__}("
+        r += f"name='{self.name}',"
+        r += f"number={self.number},"
+        r += f"stage=Stage.from_string('{self.stage}'),"
+        r += ")"
+        return r
+
+    @property
+    def stage(self) -> str:
+        """Gets the stage name.
+        The stage is saved as an enum, but this returns just
+            the name.
+        Returns
+        -------
+        str
+            The name of the stage this Digimon is in.
+        """
+        return self._stage_enum.value
+
+
+class Individual:
+    def __init__(self, number:int, nickname:str=None, level:int=None):
+        self.number = number
         self._nickname = nickname
         if level is None or level < 1:
             self.level = 1
@@ -63,9 +100,7 @@ class Digimon:
                 recreate this object.
         """
         r = f"{self.__class__.__name__}("
-        r += f"name='{self.name}',"
         r += f"number={self.number},"
-        r += f"stage=Stage.from_string('{self.stage}'),"
         if self._nickname is None:
             r += f"nickname=None,"
         else:
@@ -98,18 +133,4 @@ class Digimon:
             The new nickname
         """
         self._nickname = new_nickname
-
-
-    @property
-    def stage(self) -> str:
-        """Gets the stage name.
-        The stage is saved as an enum, but this returns just
-            the name.
-        Returns
-        -------
-        str
-            The name of the stage this Digimon is in.
-        """
-        return self._stage_enum.value
-
 

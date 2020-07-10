@@ -3,27 +3,28 @@
 import random
 random.seed()
 
-from .digimon import Digimon, Stage
+from .digimon import Individual, Species, Stage
 
 class Database:
     def __init__(self, file_path:str):
         self.diginfo = {}
         # Read in database
-        self.diginfo[1] = Digimon("Kuramon", 1, Stage.BABY)
+        self.diginfo[1] = Species("Kuramon", 1, Stage.BABY)
 
     
-    def random_digimon(self) -> Digimon:
+    def random_digimon(self) -> Individual:
         """Returns a random Digimon with a random level
         Returns
         -------
-        Digimon:
+        Individual:
             A random Digimon with a random level
         """
         # Get a random id number for a Digimon
-        random_id = random.randrange(min(self.diginfo), max(self.diginfo)+1)
-        # Get Digimon
-        d = self.diginfo[random_id]
+        random_species_number = random.randrange(
+                min(self.diginfo), max(self.diginfo)+1)
+        # Create an Individual
+        i = Individual(random_species_number)
         # Set to a random level
-        d.level = random.randrange(1,101)
-        return d
+        i.level = random.randrange(1,101)
+        return i
 
