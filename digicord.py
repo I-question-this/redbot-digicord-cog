@@ -27,6 +27,7 @@ def sprite_path(digimon_number:int) -> str:
         The number to get the sprite image for.
     Returns
     -------
+    str:
         The file path for the sprite image.
     """
     return os.path.join(SPRITES_DIR, f"{digimon_number}.png")
@@ -40,6 +41,7 @@ def field_path(digimon_number:int):
         The number to get the field image for.
     Returns
     -------
+    str:
         The file path for the field image.
     """
     return os.path.join(FIELD_DIR, f"{digimon_number}.png")
