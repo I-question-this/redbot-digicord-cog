@@ -1,15 +1,48 @@
 import discord
 import logging
+import os
 import random
 random.seed()
 from redbot.core import checks, commands, Config
 from redbot.core.data_manager import cog_data_path
 from redbot.core.bot import Red
+import shutil
 
 log = logging.getLogger("red.digicord")
 _DEFAULT_GUILD = {
     "spawn_channel": None
 }
+
+# Determine image folder locations
+FILE_DIR = os.path.dirname(os.path.abspath(__file__))
+IMAGES_DIR = os.path.join(FILE_DIR, "images")
+SPRITES_DIR = os.path.join(IMAGES_DIR, "sprites")
+FIELD_DIR = os.path.join(IMAGES_DIR, "field")
+
+def sprite_path(digimon_number:int) -> str:
+    """Returns the file path for the sprite given a Digimon number.
+    Parameters
+    ----------
+    digimon_number: int
+        The number to get the sprite image for.
+    Returns
+    -------
+        The file path for the sprite image.
+    """
+    return os.path.join(SPRITES_DIR, f"{digimon_number}.png")
+
+
+def field_path(digimon_number:int):
+    """Returns the file path for the field image given a Digimon number.
+    Parameters
+    ----------
+    digimon_number: int
+        The number to get the field image for.
+    Returns
+    -------
+        The file path for the field image.
+    """
+    return os.path.join(FIELD_DIR, f"{digimon_number}.png")
 
 
 class Digicord(commands.Cog):
@@ -72,3 +105,4 @@ class Digicord(commands.Cog):
             )
         embed = discord.Embed.from_dict(contents)
         await ctx.send(embed=embed)
+
