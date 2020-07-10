@@ -9,13 +9,18 @@ from redbot.core.bot import Red
 import shutil
 
 from .database import Database
+from .digimon import Individual
 
 log = logging.getLogger("red.digicord")
 _DEFAULT_GLOBAL = {
     "spawn_chance": 1
     }
 _DEFAULT_GUILD = {
-    "spawn_channel": None
+    "spawn_channel": None,
+    "current_digimon": None
+}
+_DEFAULT_USER = {
+    "digimon": {}
 }
 
 # Determine image folder locations
@@ -61,7 +66,36 @@ class Digicord(commands.Cog):
         self._conf = Config.get_conf(None, 90210, cog_name=f"{self.__class__.__name__}", force_registration=True)
         self._conf.register_global(**_DEFAULT_GLOBAL)
         self._conf.register_guild(**_DEFAULT_GUILD)
+        self._conf.register_user(**_DEFAULT_USER)
         self.database = Database("")
+
+
+    async def _embed_msg(self, ctx: commands.Context, title:str,
+            description:str, file:discord.File=None) -> None:
+        """Assemble and send an embedded message.
+        Parameters
+        ----------
+        title: str
+            Title of the embedded image
+        description: str
+            Description of the embed
+        file: discord.File
+            File object to embed within the message.
+            This is optional.
+        """
+        # Assemble the contents of the message
+        contents = dict(
+                title=title, 
+                type="rich", 
+                description=description
+            )
+        embed = discord.Embed.from_dict(contents)
+        # Attach file if it exists
+        if file is not None:
+            embed.set_image(url=f"attachment://{file.filename}")
+        # Send the message
+        await ctx.send(embed=embed, file=file)
+
 
 
     @commands.Cog.listener()
@@ -90,6 +124,10 @@ class Digicord(commands.Cog):
         # Randomly select a Digimon
         d = self.database.random_digimon()
 
+        # Save this digimon's existence so it can be caught
+        await self._conf.guild(channel.guild).current_digimon.set(
+                d.to_dict())
+
         # Send the data
         await self._embed_msg(
                 ctx=channel,
@@ -99,9 +137,14 @@ class Digicord(commands.Cog):
             )
 
 
+    @commands.group()
+    async def admin(self, ctx: commands.Context) -> None:
+        """Admin commands"""
+
+
     @commands.guild_only()
     @commands.admin()
-    @commands.command(name="set_spawn_channel")
+    @admin.command(name="set_spawn_channel")
     async def set_spawn_channel(self, ctx: commands.Context, channel:discord.TextChannel):
         """Sets which channel the bot spawns Digimon in.
         Parameters
@@ -118,7 +161,7 @@ class Digicord(commands.Cog):
 
 
     @checks.is_owner()
-    @commands.command(name="set_spawn_chance")
+    @admin.command(name="set_spawn_chance")
     async def set_spawn_chance(self, ctx: commands.Context, spawn_chance:int):
         """Sets the spawn chance.
 
@@ -139,34 +182,71 @@ class Digicord(commands.Cog):
 
     @commands.guild_only()
     @commands.admin()
-    @commands.command(name="spawn_digimon")
+    @admin.command(name="spawn_digimon")
     async def command_spawn_digimon(self, ctx: commands.Context):
         await self.spawn_digimon(ctx)
 
 
-    async def _embed_msg(self, ctx: commands.Context, title:str,
-            description:str, file:discord.File=None) -> None:
-        """Assemble and send an embedded message.
+    @commands.group()
+    @commands.guild_only()
+    async def user(self, ctx: commands.Context) -> None:
+        """User commands"""
+
+
+    async def new_id_number(self, user:discord.User) -> int:
+        """Returns the next id number to be used for a new Digimon
+        
         Parameters
         ----------
-        title: str
-            Title of the embedded image
-        description: str
-            Description of the embed
-        file: discord.File
-            File object to embed within the message.
-            This is optional.
+        user: discord.User
+            The user to return this information for.
+
+        Returns
+        -------
+        int:
+            The new (max+1) id number to be used for a new Digimon
         """
-        # Assemble the contents of the message
-        contents = dict(
-                title=title, 
-                type="rich", 
-                description=description
-            )
-        embed = discord.Embed.from_dict(contents)
-        # Attach file if it exists
-        if file is not None:
-            embed.set_image(url=f"attachment://{file.filename}")
-        # Send the message
-        await ctx.send(embed=embed, file=file)
+        return len(await self._conf.user(user).digimon()) + 1
+
+
+    async def register_digimon(self, user:discord.User, digi:Individual):
+        """Register a given Digimon to a given user.
+        
+        Parameters
+        ----------
+        user: discord.User
+            The user to register the Digimon to.
+        digi: Individual
+            The Individual Digimon to register
+        """
+        caught_digimon = await self._conf.user(user).digimon()
+        caught_digimon[await self.new_id_number(user)] = digi.to_dict()
+        await self._conf.user(user).digimon.set(caught_digimon)
+
+
+    @commands.command(name="catch")
+    async def catch(self, ctx: commands.Context, guess: str):
+        """Attempt to catch a Digimon via guessing it's name.
+        
+        Parameters
+        ----------
+        guess: str
+            The guessed name.
+        """
+        cur = await self._conf.guild(ctx.guild).current_digimon()
+        if cur is None:
+            # There is no current digimon to be caught
+            return
+        # Execute to get the current digimon
+        cur = Individual.from_dict(cur)
+        guess = guess.lower()
+        real_name = self.database.diginfo[cur.number].name.lower()
+        if guess == real_name:
+            await self.register_digimon(ctx.author, cur)
+            await self._embed_msg(
+                    ctx=ctx,
+                    title=f"Congratulations!",
+                    description=f"{ctx.author.mention} caught a level"\
+                            f" {cur.level} {real_name.capitalize()}"
+                )
 

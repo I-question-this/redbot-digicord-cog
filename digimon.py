@@ -41,25 +41,33 @@ class Species:
         self._stage_enum = stage
 
 
-    def __repr__(self):
-        """Returns the representation of this Species.
-        The representation is a string, that if executed
-            as Python code would recreate this object.
-        This requires that the object be set up to have no
-            values saved beyond what can be derived from the
-            parameters in it's constructor method.
+    def to_dict(self) -> dict:
+        """Returns all parameters needed to recreate this object
+
         Returns
         -------
-        str:
-            A string of Python code that if executed would 
-                recreate this object.
+        dict:
+            Parameters needed to recreate this object
         """
-        r = f"{self.__class__.__name__}("
-        r += f"name='{self.name}',"
-        r += f"number={self.number},"
-        r += f"stage=Stage.from_string('{self.stage}'),"
-        r += ")"
-        return r
+        parameters = {}
+        parameters["name"] = self.name
+        parameters["number"] = self.number
+        parameters["stage"] = self.stage
+        return parameters
+
+
+    @staticmethod
+    def from_dict(parameters:dict):
+        """Creates an instance of this object with the given dictionary"""
+        if isinstance(parameters["stage"], str):
+            parameters["stage"] = Stage.from_string(parameters["stage"])
+
+        return Species(
+            name=parameters["name"],
+            number=parameters["number"],
+            stage=parameters["stage"]
+        )
+
 
     @property
     def stage(self) -> str:
@@ -77,7 +85,7 @@ class Species:
 class Individual:
     def __init__(self, number:int, nickname:str=None, level:int=None):
         self.number = number
-        self._nickname = nickname
+        self.nickname = nickname
         if level is None or level < 1:
             self.level = 1
         elif level > 100:
@@ -86,51 +94,27 @@ class Individual:
             self.level = level
 
 
-    def __repr__(self):
-        """Returns the representation of this Digimon.
-        The representation is a string, that if executed
-            as Python code would recreate this object.
-        This requires that the object be set up to have no
-            values saved beyond what can be derived from the
-            parameters in it's constructor method.
+    def to_dict(self) -> dict:
+        """Returns all parameters needed to recreate this object
+
         Returns
         -------
-        str:
-            A string of Python code that if executed would 
-                recreate this object.
+        dict:
+            Parameters needed to recreate this object
         """
-        r = f"{self.__class__.__name__}("
-        r += f"number={self.number},"
-        if self._nickname is None:
-            r += f"nickname=None,"
-        else:
-            r += f"nickname='{self._nickname}',"
-        r += f"level={self.level}"
-        r += ")"
-        return r
+        parameters = {}
+        parameters["nickname"] = self.nickname
+        parameters["number"] = self.number
+        parameters["level"] = self.level
+        return parameters
 
 
-    @property
-    def nickname(self) -> str:
-        """Gets the nickname, or just the species name.
-        Returns
-        -------
-        str
-            The "nickname" of the Digimon
-        """
-        if self._nickname is not None:
-            return self._nickname
-        else:
-            return self.name
-
-
-    @nickname.setter
-    def nickname(self, new_nickname:str):
-        """Sets nickname for the Digimon
-        Parameters
-        ----------
-        new_nickname: str
-            The new nickname
-        """
-        self._nickname = new_nickname
+    @staticmethod
+    def from_dict(parameters:dict):
+        """Creates an instance of this object with the given dictionary"""
+        return Individual(
+            nickname=parameters["nickname"],
+            number=parameters["number"],
+            level=parameters["level"]
+        )
 
