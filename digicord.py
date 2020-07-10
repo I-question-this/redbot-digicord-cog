@@ -8,7 +8,12 @@ from redbot.core.data_manager import cog_data_path
 from redbot.core.bot import Red
 import shutil
 
+from .database import Database
+
 log = logging.getLogger("red.digicord")
+_DEFAULT_GLOBAL = {
+    "spawn_chance": 1
+    }
 _DEFAULT_GUILD = {
     "spawn_channel": None
 }
@@ -51,10 +56,12 @@ class Digicord(commands.Cog):
     """Digicord cog"""
 
     def __init__(self, bot:Red):
-            super().__init__()
-            self.bot = bot
-            self._conf = Config.get_conf(None, 90210, cog_name=f"{self.__class__.__name__}", force_registration=True)
-            self._conf.register_guild(**_DEFAULT_GUILD)
+        super().__init__()
+        self.bot = bot
+        self._conf = Config.get_conf(None, 90210, cog_name=f"{self.__class__.__name__}", force_registration=True)
+        self._conf.register_global(**_DEFAULT_GLOBAL)
+        self._conf.register_guild(**_DEFAULT_GUILD)
+        self.database = Database("")
 
 
     @commands.Cog.listener()
@@ -70,7 +77,7 @@ class Digicord(commands.Cog):
             return
 
         # Maybe spawn Digimon 
-        if random.randrange(0,100) < 10:
+        if random.randrange(0,100) < await self._conf.spawn_chance():
             await self.spawn_digimon(message.channel)
 
 
@@ -80,13 +87,16 @@ class Digicord(commands.Cog):
         if channel_id is not None:
             channel = self.bot.get_channel(channel_id)
 
+        # Randomly select a Digimon
+        d = self.database.random_digimon()
+
         # Send the data
-        contents = dict(
+        await self._embed_msg(
+                ctx=channel,
                 title="A Wild Digimon has Appeared!",
-                description="Not really, but maybe in the future!"
-                )
-        embed = discord.Embed.from_dict(contents)
-        await channel.send(embed=embed)
+                description="",
+                file=discord.File(field_path(d.number))
+            )
 
 
     @commands.guild_only()
@@ -100,11 +110,63 @@ class Digicord(commands.Cog):
             The channel that digimon will appear in.
         """
         await self._conf.guild(ctx.guild).spawn_channel.set(channel.id)
+        await self._embed_msg(
+                ctx=ctx,
+                title="Set Spawn Channel: Success",
+                description=f"Spawn channel set to {channel.name}"
+            )
 
+
+    @checks.is_owner()
+    @commands.command(name="set_spawn_chance")
+    async def set_spawn_chance(self, ctx: commands.Context, spawn_chance:int):
+        """Sets the spawn chance.
+
+        Parameters
+        ----------
+        spawn_chance: int
+            Set chance in which a digimon will spawn after a message is sent.
+        """
+        if 0 < spawn_chance <= 100:
+            await self._conf.spawn_chance.set(spawn_chance)
+            title="Set Spawn Chance: Success"
+            description=f"Spawn chance set to {spawn_chance}%"
+        else:
+            title="Set Spawn Chance: Failure"
+            description=f"Spawn chance has to be (0,100], which is not {spawn_chance}"
+        await self._embed_msg(ctx, title, description)
+
+
+    @commands.guild_only()
+    @commands.admin()
+    @commands.command(name="spawn_digimon")
+    async def command_spawn_digimon(self, ctx: commands.Context):
+        await self.spawn_digimon(ctx)
+
+
+    async def _embed_msg(self, ctx: commands.Context, title:str,
+            description:str, file:discord.File=None) -> None:
+        """Assemble and send an embedded message.
+        Parameters
+        ----------
+        title: str
+            Title of the embedded image
+        description: str
+            Description of the embed
+        file: discord.File
+            File object to embed within the message.
+            This is optional.
+        """
+        # Assemble the contents of the message
         contents = dict(
-            title="Set Spawn Channel: Success",
-            description=f"Spawn channel set to {channel.name}"
+                title=title, 
+                type="rich", 
+                description=description
             )
         embed = discord.Embed.from_dict(contents)
-        await ctx.send(embed=embed)
+        # Attach file if it exists
+        if file is not None:
+            embed.set_image(url=f"attachment://{file.filename}")
+        # Send the message
+        await ctx.send(embed=embed, file=file)
 
