@@ -10,6 +10,15 @@ from .digimon import Individual, Species, Stage
 log = logging.getLogger("red.digicord")
 
 
+class UnknownSpeciesNumber(Exception):
+    def __init__(self, species_number:int):
+        self.species_number = species_number
+
+    def __str__(self):
+        return f"Unknown species number: {self.species_number}"
+
+
+
 class Database:
     def __init__(self, file_path:str):
         self._diginfo = {}
@@ -34,12 +43,12 @@ class Database:
         return i
 
 
-    def species_information(self, id:int) -> Species:
+    def species_information(self, species_number:int) -> Species:
         """Returns Species information for a given species id number
         
         Parameters
         ----------
-        id: int
+        species_number: int
             The species id number to get information for.
 
         Returns
@@ -47,8 +56,9 @@ class Database:
         Species:
             The species information
         """
-        spec = self._diginfo.get(id, None)
-        if spec is None:
-            LOG.critical(f"No such species number: {id}")
-        return spec
+        try:
+            return self._diginfo[species_number]
+        except KeyError:
+            LOG.exception(f"No such species number: {id}")
+            raise UnknownSpeciesNumber(species_number)
 
