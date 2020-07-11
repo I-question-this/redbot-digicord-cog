@@ -243,10 +243,10 @@ class Digicord(commands.Cog):
         real_name = self.database.diginfo[cur.number].name.lower()
         if guess == real_name:
             await self.register_digimon(ctx.author, cur)
+            await self._conf.guild(ctx.guild).current_digimon.set(None)
             await self._embed_msg(
                     ctx=ctx,
                     title=f"Congratulations!",
                     description=f"{ctx.author.mention} caught a level"\
                             f" {cur.level} {real_name.capitalize()}"
                 )
-
