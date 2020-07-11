@@ -242,7 +242,7 @@ class Digicord(commands.Cog):
         # Execute to get the current digimon
         cur = Individual.from_dict(cur)
         guess = guess.lower()
-        real_name = self.database.diginfo[cur.number].name.lower()
+        real_name = self.database.species_information(cur.number).name.lower()
         if guess == real_name:
             await self.register_digimon(ctx.author, cur)
             await self._embed_msg(
