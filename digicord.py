@@ -206,7 +206,8 @@ class Digicord(commands.Cog):
         int:
             The new (max+1) id number to be used for a new Digimon
         """
-        return len(await self._conf.user(user).digimon()) + 1
+        caught_digimon = await self._conf.user(user).digimon()
+        return str(len(caught_digimon) + 1)
 
 
     async def register_digimon(self, user:discord.User, digi:Individual):
@@ -220,7 +221,8 @@ class Digicord(commands.Cog):
             The Individual Digimon to register
         """
         caught_digimon = await self._conf.user(user).digimon()
-        caught_digimon[await self.new_id_number(user)] = digi.to_dict()
+        new_id = await self.new_id_number(user)
+        caught_digimon[new_id] = digi.to_dict()
         await self._conf.user(user).digimon.set(caught_digimon)
 
 
