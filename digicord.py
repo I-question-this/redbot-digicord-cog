@@ -60,6 +60,17 @@ def field_path(digimon_number:int):
     return os.path.join(FIELD_DIR, f"{digimon_number}.png")
 
 
+
+class UnknownDigimonIdNumber(Exception):
+    def __init__(self, user:discord.User, id_number:int):
+        self.id_number = id_number
+
+    def __str__(self):
+        return f"Unknown Digimon id number {self.id_number} " \
+                f"for user {user.id}"
+
+
+
 class Digicord(commands.Cog):
     """Digicord cog"""
 
@@ -251,8 +262,7 @@ class Digicord(commands.Cog):
         caught_digimon = await self._conf.user(user).digimon()
         ind_info = caught_digimon.get(id, None)
         if ind_info is None:
-            log.error(f"No such id number '{id}' for user '{user.id}'")
-            return None, None
+            raise UnknownDigimonIdNumber(user, id)
         else:
             ind = Individual.from_dict(ind_info)
             spec = self.database.species_information(ind.number)
@@ -295,12 +305,8 @@ class Digicord(commands.Cog):
         int: int
             The id of the Digimon to select.
         """
-        selection = await self.get_user_digimon(ctx.author, id)
-        if selection[0] is None:
-            title="Selection Failed"
-            description=f"{ctx.author.mention}: No such Digimon with that"\
-                    " ID exists"
-        else:
+        try:
+            selection = await self.get_user_digimon(ctx.author, id)
             await self._conf.user(ctx.author).selected_digimon.set(id)
             log.info(f"{ctx.author.id} selected {id}")
             title="Selection Successful"
@@ -310,5 +316,11 @@ class Digicord(commands.Cog):
                 nickname = selection[1].name
             description=f"{ctx.author.mention}: Selected "\
                     f"{nickname}({selection[1].name})"
-        await self._embed_msg(ctx, title, description)
+            await self._embed_msg(ctx, title, description)
+        except UnknownDigimonIdNumber:
+            log.error(f"No such id {id} for user {ctx.author.id}")
+            title="Selection Failed"
+            description=f"{ctx.author.mention}: No such Digimon with that"\
+                    " ID exists"
+            await self._embed_msg(ctx, title, description)
 
