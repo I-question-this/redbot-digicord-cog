@@ -148,6 +148,8 @@ class Digicord(commands.Cog):
         await self._conf.guild(channel.guild).current_digimon.set(
                 d.to_dict())
 
+        LOG.info(f"Spawned Digimon: \"{d.to_dict()}\" in guild " \
+                f"{channel.guild.id}, channel {channel.id}")
         # Send the data
         await self._embed_msg(
                 ctx=channel,
