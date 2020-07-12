@@ -151,6 +151,8 @@ class Digicord(commands.Cog):
         ----------
         channel: discord.TextChannel
             The channel that digimon will appear in.
+            The optional is None and will result in the Digimon appearing
+            in any channel
         """
         await self._conf.guild(ctx.guild).spawn_channel.set(channel.id)
         await self._embed_msg(
