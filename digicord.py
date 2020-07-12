@@ -322,6 +322,8 @@ class Digicord(commands.Cog):
         if guess == real_name:
             await self.register_digimon(ctx.author, cur)
             await self._conf.guild(ctx.guild).current_digimon.set(None)
+            LOG.info(f"User {ctx.author.id} in guild {ctx.guild.id} "\
+                    f"caught Digimon: \"{cur.to_dict()}\"")
             await self._embed_msg(
                     ctx=ctx,
                     title=f"Congratulations!",
