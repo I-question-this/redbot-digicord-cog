@@ -152,6 +152,8 @@ class Digicord(commands.Cog):
         ----------
         channel: discord.TextChannel
             The channel that digimon will appear in.
+            The optional is None and will result in the Digimon appearing
+            in any channel
         """
         if channel is None:
             await self._conf.guild(ctx.guild).spawn_channel.set(None)
@@ -190,7 +192,7 @@ class Digicord(commands.Cog):
 
 
     @commands.guild_only()
-    @commands.admin()
+    @commands.is_owner()
     @admin.command(name="spawn_digimon")
     async def command_spawn_digimon(self, ctx: commands.Context):
         await self.spawn_digimon(ctx)
