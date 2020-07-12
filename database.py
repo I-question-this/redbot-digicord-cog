@@ -55,6 +55,13 @@ class Database:
         -------
         Species:
             The species information
+
+        Raises
+        ------
+        UnknownSpeciesNumber
+           Indicates the species_number is beyond our understanding.
+           There is no good reason for this to occur as user input
+           should never cause this.
         """
         try:
             return self._diginfo[species_number]
