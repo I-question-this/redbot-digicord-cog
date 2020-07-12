@@ -404,3 +404,50 @@ class Digicord(commands.Cog):
                 thumbnail_file=discord.File(sprite_path(spec.species_number))
               )
 
+
+    @digimon.command(name="list")
+    async def list(self, ctx: commands.Context, page_number:int=1):
+        """Lists the Digimon owned by the User.
+        
+        Parameters
+        ----------
+        page_number: int
+            The page number to display. The default is 1.
+        """
+        max_on_page = 10
+        # Check that they have Digimon
+        caught_digimon = await self._conf.user(ctx.author).digimon()
+        if len(caught_digimon) == 0:
+            # They have no Digimon
+            title = "Not Applicable"
+            description = f"{ctx.author.mention}: You have no Digimon"
+            await self._embed_msg(ctx, title, description)
+            # There's nothing left to do for them
+            return
+
+        # Check that it's a valid page number 
+        maximum_page_number = int(len(caught_digimon) / max_on_page) + 1
+        if not (1 <= page_number <= maximum_page_number):
+            # They have no Digimon
+            title = "Not a Valid Page Number"
+            description = f"{ctx.author.mention}: Page number must be [1,"\
+                    f"{maximum_page_number}]"
+            await self._embed_msg(ctx, title, description)
+            # There's nothing left to do for them
+            return
+
+        # Get the ids for the page
+        all_digi_ids = sorted((int(d_id) for d_id in caught_digimon.keys()))
+        digimon_ids_to_display = all_digi_ids\
+                [(page_number-1)*max_on_page:page_number*max_on_page]
+
+        # Assembly information
+        title = f"Owned Digimon: Page {page_number}"
+        description = ""
+        for digi_id in digimon_ids_to_display:
+            ind, spec = await self.get_user_digimon(ctx.author, digi_id)
+            description += f"{digi_id}: {ind.nickname}({spec.name}); "\
+                    f"Level: {ind.level}\n"
+        description += f"Page {page_number} of {maximum_page_number}"
+        await self._embed_msg(ctx, title, description)
+
