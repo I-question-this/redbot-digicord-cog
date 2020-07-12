@@ -306,18 +306,18 @@ class Digicord(commands.Cog):
 
 
     @digimon.command(name="select")
-    async def select(self, ctx: commands.Context, id:int):
+    async def select(self, ctx: commands.Context, digimon_id:int):
         """Selects a Digimon as the "default" for operations.
         
         Parameters
         ----------
-        int
+        digimon_id: int
             The id of the Digimon to select.
         """
         try:
-            selection = await self.get_user_digimon(ctx.author, id)
-            await self._conf.user(ctx.author).selected_digimon.set(id)
-            log.info(f"{ctx.author.id} selected {id}")
+            selection = await self.get_user_digimon(ctx.author, digimon_id)
+            await self._conf.user(ctx.author).selected_digimon.set(digimon_id)
+            log.info(f"{ctx.author.id} selected {digimon_id}")
             title="Selection Successful"
             if selection[0].nickname is not None:
                 nickname = selection[0].nickname
