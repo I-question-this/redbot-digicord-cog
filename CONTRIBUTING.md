@@ -1,5 +1,5 @@
 # When to make an Issue
-Always. For every new feature and for every bug there should be a seperate issue.
+Always. For every new feature, every bug, every refactoring, and every documentation change there should be a separate issue.
 
 # When to make a Branch
 For every issue, there should be a branch
