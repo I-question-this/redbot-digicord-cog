@@ -43,7 +43,7 @@ def sprite_path(digimon_number:int) -> str:
     str:
         The file path for the sprite image.
     """
-    return os.path.join(SPRITES_DIR, f"{digimon_number}.png")
+    return os.path.join(SPRITES_DIR, f"sprite-{digimon_number}.png")
 
 
 def field_path(digimon_number:int):
@@ -57,7 +57,7 @@ def field_path(digimon_number:int):
     str:
         The file path for the field image.
     """
-    return os.path.join(FIELD_DIR, f"{digimon_number}.png")
+    return os.path.join(FIELD_DIR, f"field-{digimon_number}.png")
 
 
 
@@ -85,7 +85,8 @@ class Digicord(commands.Cog):
 
 
     async def _embed_msg(self, ctx: commands.Context, title:str,
-            description:str, file:discord.File=None) -> None:
+            description:str, image_file:discord.File=None,
+            thumbnail_file:discord.File=None) -> None:
         """Assemble and send an embedded message.
         Parameters
         ----------
@@ -93,8 +94,11 @@ class Digicord(commands.Cog):
             Title of the embedded image
         description: str
             Description of the embed
-        file: discord.File
-            File object to embed within the message.
+        image_file: discord.File
+            Image to embed within the message.
+            This is optional.
+        thumbnail_file: discord.File
+            Thumbnail to embed within the message.
             This is optional.
         """
         # Assemble the contents of the message
@@ -104,11 +108,19 @@ class Digicord(commands.Cog):
                 description=description
             )
         embed = discord.Embed.from_dict(contents)
-        # Attach file if it exists
-        if file is not None:
-            embed.set_image(url=f"attachment://{file.filename}")
+        files = []
+        # Attach thumbnail file if it exists
+        if thumbnail_file is not None:
+            files.append(thumbnail_file)
+            embed.set_thumbnail(url=f"attachment://{thumbnail_file.filename}")
+            print(thumbnail_file.filename)
+        # Attach image file if it exists
+        if image_file is not None:
+            files.append(image_file)
+            embed.set_image(url=f"attachment://{image_file.filename}")
+            print(image_file.filename)
         # Send the message
-        await ctx.send(embed=embed, file=file)
+        await ctx.send(embed=embed, files=files)
 
 
 
@@ -155,7 +167,8 @@ class Digicord(commands.Cog):
                 ctx=channel,
                 title="A Wild Digimon has Appeared!",
                 description="",
-                file=discord.File(field_path(d.number))
+                image_file=discord.File(field_path(d.number)),
+                thumbnail_file=discord.File(sprite_path(d.number))
             )
 
 
