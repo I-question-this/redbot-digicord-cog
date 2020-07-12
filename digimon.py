@@ -35,9 +35,9 @@ class Stage(Enum):
 
 
 class Species:
-    def __init__(self, name:str, number:int, stage:Stage):
+    def __init__(self, name:str, species_number:int, stage:Stage):
         self.name = name
-        self.number = number
+        self.species_number = species_number
         self._stage_enum = stage
 
 
@@ -51,7 +51,7 @@ class Species:
         """
         parameters = {}
         parameters["name"] = self.name
-        parameters["number"] = self.number
+        parameters["species_number"] = self.species_number
         parameters["stage"] = self.stage
         return parameters
 
@@ -64,7 +64,7 @@ class Species:
 
         return Species(
             name=parameters["name"],
-            number=parameters["number"],
+            species_number=parameters["species_number"],
             stage=parameters["stage"]
         )
 
@@ -83,8 +83,8 @@ class Species:
 
 
 class Individual:
-    def __init__(self, number:int, nickname:str, level:int=None):
-        self.number = number
+    def __init__(self, species_number:int, nickname:str, level:int=None):
+        self.species_number = species_number
         self.nickname = nickname
         if level is None or level < 1:
             self.level = 1
@@ -104,7 +104,7 @@ class Individual:
         """
         parameters = {}
         parameters["nickname"] = self.nickname
-        parameters["number"] = self.number
+        parameters["species_number"] = self.species_number
         parameters["level"] = self.level
         return parameters
 
@@ -114,7 +114,7 @@ class Individual:
         """Creates an instance of this object with the given dictionary"""
         return Individual(
             nickname=parameters["nickname"],
-            number=parameters["number"],
+            species_number=parameters["species_number"],
             level=parameters["level"]
         )
 
