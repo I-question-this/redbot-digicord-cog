@@ -12,6 +12,9 @@ Branching should be never be done directly off of master (besides the lone devel
 + Pull-Requests should always have at least one reviewer
   + The reviewer(s) should be the ones to close discussions
   + All reviewers must approve the work before a pull request is completed.
++ Required Reviewers
+  + Tyler Westland <i-question-this>
+  + Wayne Stegner <stegnerw>
 
 # Documentation/Formatting
 ## Functions
