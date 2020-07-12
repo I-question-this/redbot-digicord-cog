@@ -7,7 +7,7 @@ random.seed()
 from .digimon import Individual, Species, Stage
 
 
-log = logging.getLogger("red.digicord")
+LOG = logging.getLogger("red.digicord")
 
 
 class UnknownSpeciesNumber(Exception):

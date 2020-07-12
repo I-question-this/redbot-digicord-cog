@@ -12,7 +12,7 @@ from .database import Database
 from .digimon import Individual, Species
 
 
-log = logging.getLogger("red.digicord")
+LOG = logging.getLogger("red.digicord")
 
 _DEFAULT_GLOBAL = {
     "spawn_chance": 1
@@ -148,6 +148,8 @@ class Digicord(commands.Cog):
         await self._conf.guild(channel.guild).current_digimon.set(
                 d.to_dict())
 
+        LOG.info(f"Spawned Digimon: \"{d.to_dict()}\" in guild " \
+                f"{channel.guild.id}, channel {channel.id}")
         # Send the data
         await self._embed_msg(
                 ctx=channel,
@@ -177,6 +179,7 @@ class Digicord(commands.Cog):
         """
         if channel is None:
             await self._conf.guild(ctx.guild).spawn_channel.set(None)
+            LOG.info(f"In guild {ctx.guild.id} set spawn channel to: any")
             await self._embed_msg(
                     ctx=ctx,
                     title="Set Spawn Channel: Success",
@@ -184,6 +187,8 @@ class Digicord(commands.Cog):
                 )
         else:
             await self._conf.guild(ctx.guild).spawn_channel.set(channel.id)
+            LOG.info(f"In guild {ctx.guild.id} set spawn channel to: "\
+                    f"{channel.id}")
             await self._embed_msg(
                     ctx=ctx,
                     title="Set Spawn Channel: Success",
@@ -203,6 +208,7 @@ class Digicord(commands.Cog):
         """
         if 0 < spawn_chance <= 100:
             await self._conf.spawn_chance.set(spawn_chance)
+            LOG.info(f"Set spawn chance to {spawn_chance}%")
             title="Set Spawn Chance: Success"
             description=f"Spawn chance set to {spawn_chance}%"
         else:
@@ -316,6 +322,8 @@ class Digicord(commands.Cog):
         if guess == real_name:
             await self.register_digimon(ctx.author, cur)
             await self._conf.guild(ctx.guild).current_digimon.set(None)
+            LOG.info(f"User {ctx.author.id} in guild {ctx.guild.id} "\
+                    f"caught Digimon: \"{cur.to_dict()}\"")
             await self._embed_msg(
                     ctx=ctx,
                     title=f"Congratulations!",
@@ -336,7 +344,7 @@ class Digicord(commands.Cog):
         try:
             selection = await self.get_user_digimon(ctx.author, digimon_id)
             await self._conf.user(ctx.author).selected_digimon.set(digimon_id)
-            log.info(f"{ctx.author.id} selected {digimon_id}")
+            LOG.info(f"{ctx.author.id} selected {digimon_id}")
             title="Selection Successful"
             if selection[0].nickname is not None:
                 nickname = selection[0].nickname
@@ -346,7 +354,7 @@ class Digicord(commands.Cog):
                     f"{nickname}({selection[1].name})"
             await self._embed_msg(ctx, title, description)
         except UnknownDigimonIdNumber:
-            log.error(f"No such id {id} for user {ctx.author.id}")
+            LOG.error(f"No such id {id} for user {ctx.author.id}")
             title="Selection Failed"
             description=f"{ctx.author.mention}: No such Digimon with that"\
                     " ID exists"
