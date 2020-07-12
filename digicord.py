@@ -181,7 +181,7 @@ class Digicord(commands.Cog):
 
 
     @commands.guild_only()
-    @commands.admin()
+    @commands.is_owner()
     @admin.command(name="spawn_digimon")
     async def command_spawn_digimon(self, ctx: commands.Context):
         await self.spawn_digimon(ctx)
