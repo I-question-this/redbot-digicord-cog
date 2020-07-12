@@ -116,6 +116,12 @@ class Digicord(commands.Cog):
 
 
     async def spawn_digimon(self, channel:discord.TextChannel):
+        """Spawns a random Digimon.
+        Parameters
+        ----------
+        channel: discord.TextChannel
+            The channel that the random Digimon will appear in.
+        """
         # Get proper spawn channel
         channel_id = await self._conf.guild(channel.guild).spawn_channel()
         if channel_id is not None:
@@ -184,6 +190,8 @@ class Digicord(commands.Cog):
     @commands.admin()
     @admin.command(name="spawn_digimon")
     async def command_spawn_digimon(self, ctx: commands.Context):
+        """Spawns a random Digimon in the current server.
+        """
         await self.spawn_digimon(ctx)
 
 
