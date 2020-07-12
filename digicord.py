@@ -311,7 +311,7 @@ class Digicord(commands.Cog):
         
         Parameters
         ----------
-        int: int
+        int
             The id of the Digimon to select.
         """
         try:
