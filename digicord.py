@@ -256,6 +256,14 @@ class Digicord(commands.Cog):
             The Digimon, at least it's Individual information
         Species:
             The species information of the selected Digimon
+        Raises
+        ------
+        UnknownDigimonIdNumber
+           Indicates the given digimon_id does not exist in
+           reference to this user.
+           This is expect to happen since this function
+           will be passed user input. Users of this function
+           beware.
         """
         # It's saved as a string in the JSON config file
         id = str(id)
