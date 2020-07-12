@@ -83,7 +83,7 @@ class Species:
 
 
 class Individual:
-    def __init__(self, number:int, nickname:str=None, level:int=None):
+    def __init__(self, number:int, nickname:str, level:int=None):
         self.number = number
         self.nickname = nickname
         if level is None or level < 1:

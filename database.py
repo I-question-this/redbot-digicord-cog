@@ -36,8 +36,10 @@ class Database:
         # Get a random id number for a Digimon
         random_species_number = random.randrange(
                 min(self._diginfo), max(self._diginfo)+1)
+        # Get species info
+        spec = self.species_information(random_species_number)
         # Create an Individual
-        i = Individual(random_species_number)
+        i = Individual(random_species_number, spec.name)
         # Set to a random level
         i.level = random.randrange(1,101)
         return i
