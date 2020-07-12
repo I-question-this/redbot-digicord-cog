@@ -32,32 +32,32 @@ IMAGES_DIR = os.path.join(FILE_DIR, "images")
 SPRITES_DIR = os.path.join(IMAGES_DIR, "sprites")
 FIELD_DIR = os.path.join(IMAGES_DIR, "field")
 
-def sprite_path(digimon_number:int) -> str:
+def sprite_path(species_number:int) -> str:
     """Returns the file path for the sprite given a Digimon number.
     Parameters
     ----------
-    digimon_number: int
+    species_number: int
         The number to get the sprite image for.
     Returns
     -------
     str:
         The file path for the sprite image.
     """
-    return os.path.join(SPRITES_DIR, f"sprite-{digimon_number}.png")
+    return os.path.join(SPRITES_DIR, f"sprite-{species_number}.png")
 
 
-def field_path(digimon_number:int):
+def field_path(species_number:int):
     """Returns the file path for the field image given a Digimon number.
     Parameters
     ----------
-    digimon_number: int
+    species_number: int
         The number to get the field image for.
     Returns
     -------
     str:
         The file path for the field image.
     """
-    return os.path.join(FIELD_DIR, f"field-{digimon_number}.png")
+    return os.path.join(FIELD_DIR, f"field-{species_number}.png")
 
 
 
@@ -167,8 +167,8 @@ class Digicord(commands.Cog):
                 ctx=channel,
                 title="A Wild Digimon has Appeared!",
                 description="",
-                image_file=discord.File(field_path(d.number)),
-                thumbnail_file=discord.File(sprite_path(d.number))
+                image_file=discord.File(field_path(d.species_number)),
+                thumbnail_file=discord.File(sprite_path(d.species_number))
             )
 
 
@@ -311,7 +311,7 @@ class Digicord(commands.Cog):
             raise UnknownDigimonIdNumber(user, digimon_id)
         else:
             ind = Individual.from_dict(ind_info)
-            spec = self.database.species_information(ind.number)
+            spec = self.database.species_information(ind.species_number)
             return ind, spec
 
 
@@ -331,7 +331,8 @@ class Digicord(commands.Cog):
         # Execute to get the current digimon
         cur = Individual.from_dict(cur)
         guess = guess.lower()
-        real_name = self.database.species_information(cur.number).name.lower()
+        real_name = self.database.species_information(cur.species_number).name\
+                .lower()
         if guess == real_name:
             await self.register_digimon(ctx.author, cur)
             await self._conf.guild(ctx.guild).current_digimon.set(None)
@@ -377,7 +378,7 @@ class Digicord(commands.Cog):
         selected_digimon_id = await self._conf.user(ctx.author).selected_digimon()
         if selected_digimon_id is None:
             # Check that they have Digimon
-            caught_digimon = await self._conf.user(user).digimon()
+            caught_digimon = await self._conf.user(ctx.author).digimon()
             if len(caught_digimon) == 0:
                 # They have no Digimon
                 title = "Not Applicable"
@@ -399,7 +400,7 @@ class Digicord(commands.Cog):
                 f"Stage: {spec.stage}\n" \
                 f"Level: {ind.level}\n"
         await self._embed_msg(ctx, title, description, 
-                image_file=discord.File(field_path(spec.number)),
-                thumbnail_file=discord.File(sprite_path(spec.number))
+                image_file=discord.File(field_path(spec.species_number)),
+                thumbnail_file=discord.File(sprite_path(spec.species_number))
               )
 
