@@ -9,9 +9,11 @@ from redbot.core.bot import Red
 import shutil
 
 from .database import Database
-from .digimon import Individual
+from .digimon import Individual, Species
+
 
 log = logging.getLogger("red.digicord")
+
 _DEFAULT_GLOBAL = {
     "spawn_chance": 1
     }
@@ -20,7 +22,8 @@ _DEFAULT_GUILD = {
     "current_digimon": None
 }
 _DEFAULT_USER = {
-    "digimon": {}
+    "digimon": {},
+    "selected_digimon": None
 }
 
 # Determine image folder locations
@@ -55,6 +58,17 @@ def field_path(digimon_number:int):
         The file path for the field image.
     """
     return os.path.join(FIELD_DIR, f"{digimon_number}.png")
+
+
+
+class UnknownDigimonIdNumber(Exception):
+    def __init__(self, user:discord.User, id_number:int):
+        self.id_number = id_number
+
+    def __str__(self):
+        return f"Unknown Digimon id number {self.id_number} " \
+                f"for user {user.id}"
+
 
 
 class Digicord(commands.Cog):
@@ -197,8 +211,8 @@ class Digicord(commands.Cog):
 
     @commands.group()
     @commands.guild_only()
-    async def user(self, ctx: commands.Context) -> None:
-        """User commands"""
+    async def digimon(self, ctx: commands.Context) -> None:
+        """Digimon commands"""
 
 
     async def new_id_number(self, user:discord.User) -> int:
@@ -214,7 +228,8 @@ class Digicord(commands.Cog):
         int:
             The new (max+1) id number to be used for a new Digimon
         """
-        return len(await self._conf.user(user).digimon()) + 1
+        caught_digimon = await self._conf.user(user).digimon()
+        return str(len(caught_digimon) + 1)
 
 
     async def register_digimon(self, user:discord.User, digi:Individual):
@@ -228,8 +243,46 @@ class Digicord(commands.Cog):
             The Individual Digimon to register
         """
         caught_digimon = await self._conf.user(user).digimon()
-        caught_digimon[await self.new_id_number(user)] = digi.to_dict()
+        new_id = await self.new_id_number(user)
+        caught_digimon[new_id] = digi.to_dict()
         await self._conf.user(user).digimon.set(caught_digimon)
+
+
+    async def get_user_digimon(self, user:discord.User, digimon_id:int)\
+        -> (Individual, Species):
+        """Register a given Digimon to a given user.
+        
+        Parameters
+        ----------
+        user: discord.User
+            The user to get the Digimon of.
+        digimon_id: int
+            The ID number of the Digimon in reference to the User
+        Returns
+        -------
+        Individual:
+            The Digimon, at least it's Individual information
+        Species:
+            The species information of the selected Digimon
+        Raises
+        ------
+        UnknownDigimonIdNumber
+           Indicates the given digimon_id does not exist in
+           reference to this user.
+           This is expect to happen since this function
+           will be passed user input. Users of this function
+           beware.
+        """
+        # It's saved as a string in the JSON config file
+        digimon_id = str(digimon_id)
+        caught_digimon = await self._conf.user(user).digimon()
+        ind_info = caught_digimon.get(digimon_id, None)
+        if ind_info is None:
+            raise UnknownDigimonIdNumber(user, digimon_id)
+        else:
+            ind = Individual.from_dict(ind_info)
+            spec = self.database.species_information(ind.number)
+            return ind, spec
 
 
     @commands.command(name="catch")
@@ -248,7 +301,7 @@ class Digicord(commands.Cog):
         # Execute to get the current digimon
         cur = Individual.from_dict(cur)
         guess = guess.lower()
-        real_name = self.database.diginfo[cur.number].name.lower()
+        real_name = self.database.species_information(cur.number).name.lower()
         if guess == real_name:
             await self.register_digimon(ctx.author, cur)
             await self._conf.guild(ctx.guild).current_digimon.set(None)
@@ -258,3 +311,33 @@ class Digicord(commands.Cog):
                     description=f"{ctx.author.mention} caught a level"\
                             f" {cur.level} {real_name.capitalize()}"
                 )
+
+
+    @digimon.command(name="select")
+    async def select(self, ctx: commands.Context, digimon_id:int):
+        """Selects a Digimon as the "default" for operations.
+        
+        Parameters
+        ----------
+        digimon_id: int
+            The id of the Digimon to select.
+        """
+        try:
+            selection = await self.get_user_digimon(ctx.author, digimon_id)
+            await self._conf.user(ctx.author).selected_digimon.set(digimon_id)
+            log.info(f"{ctx.author.id} selected {digimon_id}")
+            title="Selection Successful"
+            if selection[0].nickname is not None:
+                nickname = selection[0].nickname
+            else:
+                nickname = selection[1].name
+            description=f"{ctx.author.mention}: Selected "\
+                    f"{nickname}({selection[1].name})"
+            await self._embed_msg(ctx, title, description)
+        except UnknownDigimonIdNumber:
+            log.error(f"No such id {id} for user {ctx.author.id}")
+            title="Selection Failed"
+            description=f"{ctx.author.mention}: No such Digimon with that"\
+                    " ID exists"
+            await self._embed_msg(ctx, title, description)
+
