@@ -208,6 +208,7 @@ class Digicord(commands.Cog):
         """
         if 0 < spawn_chance <= 100:
             await self._conf.spawn_chance.set(spawn_chance)
+            LOG.info(f"Set spawn chance to {spawn_chance}%")
             title="Set Spawn Chance: Success"
             description=f"Spawn chance set to {spawn_chance}%"
         else:
