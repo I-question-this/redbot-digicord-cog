@@ -165,19 +165,30 @@ class Digicord(commands.Cog):
     @commands.guild_only()
     @commands.admin()
     @admin.command(name="set_spawn_channel")
-    async def set_spawn_channel(self, ctx: commands.Context, channel:discord.TextChannel):
-        """Sets which channel the bot spawns Digimon in.
+    async def set_spawn_channel(self, ctx: commands.Context, channel:discord.TextChannel=None):
+        """Sets which channel the bot spawns Digimon in. If no argument is given 
+            then Digimon will spawn in any channel.
         Parameters
         ----------
         channel: discord.TextChannel
             The channel that digimon will appear in.
+            The optional is None and will result in the Digimon appearing
+            in any channel
         """
-        await self._conf.guild(ctx.guild).spawn_channel.set(channel.id)
-        await self._embed_msg(
-                ctx=ctx,
-                title="Set Spawn Channel: Success",
-                description=f"Spawn channel set to {channel.name}"
-            )
+        if channel is None:
+            await self._conf.guild(ctx.guild).spawn_channel.set(None)
+            await self._embed_msg(
+                    ctx=ctx,
+                    title="Set Spawn Channel: Success",
+                    description=f"Spawn channel set to any"
+                )
+        else:
+            await self._conf.guild(ctx.guild).spawn_channel.set(channel.id)
+            await self._embed_msg(
+                    ctx=ctx,
+                    title="Set Spawn Channel: Success",
+                    description=f"Spawn channel set to {channel.name}"
+                )
 
 
     @checks.is_owner()
