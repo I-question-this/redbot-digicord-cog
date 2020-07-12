@@ -9,7 +9,7 @@ Branching should be never be done directly off of master (besides the lone devel
 
 # Pull Requests
 + Branches should merged into development via Pull-Requests.
-+ Pull-Requests should always have at least one-reviewer who will approve the work done
++ Pull-Requests should always have at least one reviewer who will approve the work done
 
 # Documentation/Formatting
 ## Functions
