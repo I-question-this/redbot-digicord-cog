@@ -13,7 +13,7 @@ Branching should be never be done directly off of master (besides the lone devel
 
 # Documentation/Formatting
 ## Functions
-+ Excplicity stated types
++ Explicitly stated types
   + All parameters must have types
   + All return types must be explicity stated
   + `def example(string:str) -> int`
