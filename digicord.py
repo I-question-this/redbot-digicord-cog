@@ -240,7 +240,7 @@ class Digicord(commands.Cog):
         await self._conf.user(user).digimon.set(caught_digimon)
 
 
-    async def get_user_digimon(self, user:discord.User, id:int)\
+    async def get_user_digimon(self, user:discord.User, digimon_id:int)\
         -> (Individual, Species):
         """Register a given Digimon to a given user.
         
@@ -248,7 +248,7 @@ class Digicord(commands.Cog):
         ----------
         user: discord.User
             The user to get the Digimon of.
-        id: int
+        digimon_id: int
             The ID number of the Digimon in reference to the User
         Returns
         -------
@@ -266,11 +266,11 @@ class Digicord(commands.Cog):
            beware.
         """
         # It's saved as a string in the JSON config file
-        id = str(id)
+        digimon_id = str(digimon_id)
         caught_digimon = await self._conf.user(user).digimon()
-        ind_info = caught_digimon.get(id, None)
+        ind_info = caught_digimon.get(digimon_id, None)
         if ind_info is None:
-            raise UnknownDigimonIdNumber(user, id)
+            raise UnknownDigimonIdNumber(user, digimon_id)
         else:
             ind = Individual.from_dict(ind_info)
             spec = self.database.species_information(ind.number)
