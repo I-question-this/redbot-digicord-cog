@@ -13,8 +13,8 @@ Branching should be never be done directly off of master (besides the lone devel
   + The reviewer(s) should be the ones to close discussions
   + All reviewers must approve the work before a pull request is completed.
 + Required Reviewers
-  + Tyler Westland <i-question-this>
-  + Wayne Stegner <stegnerw>
+  + Tyler Westland <[i-question-this](https://github.com/i-question-this)>
+  + Wayne Stegner <[stegnerw](https://github.com/stegnerw)>
 
 # Documentation/Formatting
 ## Functions
