@@ -179,6 +179,7 @@ class Digicord(commands.Cog):
         """
         if channel is None:
             await self._conf.guild(ctx.guild).spawn_channel.set(None)
+            LOG.info(f"In guild {ctx.guild.id} set spawn channel to: any")
             await self._embed_msg(
                     ctx=ctx,
                     title="Set Spawn Channel: Success",
@@ -186,6 +187,8 @@ class Digicord(commands.Cog):
                 )
         else:
             await self._conf.guild(ctx.guild).spawn_channel.set(channel.id)
+            LOG.info(f"In guild {ctx.guild.id} set spawn channel to: "\
+                    f"{channel.id}")
             await self._embed_msg(
                     ctx=ctx,
                     title="Set Spawn Channel: Success",
