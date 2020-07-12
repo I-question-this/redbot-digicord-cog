@@ -12,7 +12,7 @@ from .database import Database
 from .digimon import Individual, Species
 
 
-log = logging.getLogger("red.digicord")
+LOG = logging.getLogger("red.digicord")
 
 _DEFAULT_GLOBAL = {
     "spawn_chance": 1
