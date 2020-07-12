@@ -369,3 +369,37 @@ class Digicord(commands.Cog):
                     " ID exists"
             await self._embed_msg(ctx, title, description)
 
+
+    @digimon.command(name="info")
+    async def info(self, ctx: commands.Context):
+        """Displays information for the selected Digimon"""
+        # Check that the User has a selected Digimon
+        selected_digimon_id = await self._conf.user(ctx.author).selected_digimon()
+        if selected_digimon_id is None:
+            # Check that they have Digimon
+            caught_digimon = await self._conf.user(user).digimon()
+            if len(caught_digimon) == 0:
+                # They have no Digimon
+                title = "Not Applicable"
+                description = f"{ctx.author.mention}: You have no Digimon"
+                await self._embed_msg(ctx, title, description)
+                # There's nothing left to do for them
+                return
+            else:
+                # Set the selected Digimon as first in the list
+                selected_digimon_id = min(caught_digimon.keys())
+                await self._conf.user(ctx.author).selected_digimon\
+                        .set(selected_digimon_id)
+
+        # Get all the information
+        ind, spec = await self.get_user_digimon(ctx.author, selected_digimon_id)
+        # Display that information
+        title = f"{ind.nickname}({spec.name})"
+        description = \
+                f"Stage: {spec.stage}\n" \
+                f"Level: {ind.level}\n"
+        await self._embed_msg(ctx, title, description, 
+                image_file=discord.File(field_path(spec.number)),
+                thumbnail_file=discord.File(sprite_path(spec.number))
+              )
+
