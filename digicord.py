@@ -342,16 +342,12 @@ class Digicord(commands.Cog):
             The id of the Digimon to select.
         """
         try:
-            selection = await self.get_user_digimon(ctx.author, digimon_id)
+            ind, spec = await self.get_user_digimon(ctx.author, digimon_id)
             await self._conf.user(ctx.author).selected_digimon.set(digimon_id)
             LOG.info(f"{ctx.author.id} selected {digimon_id}")
             title="Selection Successful"
-            if selection[0].nickname is not None:
-                nickname = selection[0].nickname
-            else:
-                nickname = selection[1].name
             description=f"{ctx.author.mention}: Selected "\
-                    f"{nickname}({selection[1].name})"
+                    f"{ind.nickname}({spec.name})"
             await self._embed_msg(ctx, title, description)
         except UnknownDigimonIdNumber:
             LOG.error(f"No such id {id} for user {ctx.author.id}")
