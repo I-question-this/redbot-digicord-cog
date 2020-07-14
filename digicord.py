@@ -1,3 +1,4 @@
+import contextlib
 import discord
 import logging
 import os
@@ -6,6 +7,15 @@ random.seed()
 from redbot.core import checks, commands, Config
 from redbot.core.data_manager import cog_data_path
 from redbot.core.bot import Red
+from redbot.core.utils.menus import (
+    DEFAULT_CONTROLS,
+    close_menu,
+    menu,
+    next_page,
+    prev_page,
+    start_adding_reactions,
+)
+from redbot.core.utils.predicates import MessagePredicate, ReactionPredicate
 import shutil
 
 from .database import Database
@@ -513,6 +523,22 @@ class Digicord(commands.Cog):
         try:
             # Get a backup for logging
             ind, spec = await self.get_user_digimon(ctx.author, selected_digimon_id)
+            # Ask for user confirmation
+            await self.info(ctx)
+            info = await ctx.maybe_send_embed(f"{ctx.author.mention} "\
+                    "Confirm Deletion")
+
+            start_adding_reactions(info, ReactionPredicate.YES_OR_NO_EMOJIS)
+            pred = ReactionPredicate.yes_or_no(info, ctx.author)
+            await ctx.bot.wait_for("reaction_add", check=pred)
+
+            # If user said no
+            if not pred.result:
+                with contextlib.suppress(discord.HTTPException):
+                    await info.delete()
+                await self._embed_msg(ctx, title="",
+                        description=f"{ctx.author.mention}: Deletion canceled")
+                return
             # Delete the digimon
             await self.delete_digimon(ctx.author, selected_digimon_id)
             await self._conf.user(ctx.author).selected_digimon.set(None)
