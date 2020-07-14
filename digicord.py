@@ -549,7 +549,8 @@ class Digicord(commands.Cog):
                     f"{selected_digimon_id}: {ind.nickname}({spec.name})"
             await self._embed_msg(ctx, title, description)
         except UnknownDigimonIdNumber:
-            LOG.exception(f"No such id {id} for user {ctx.author.id}")
+            LOG.exception(f"No such id {selected_digimon_id} for user "\
+                f"{ctx.author.id}")
             title="Deletion Failed"
             description=f"{ctx.author.mention}: No such Digimon with that"\
                     " ID exists"
