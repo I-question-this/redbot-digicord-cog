@@ -113,15 +113,12 @@ class Digicord(commands.Cog):
         if thumbnail_file is not None:
             files.append(thumbnail_file)
             embed.set_thumbnail(url=f"attachment://{thumbnail_file.filename}")
-            print(thumbnail_file.filename)
         # Attach image file if it exists
         if image_file is not None:
             files.append(image_file)
             embed.set_image(url=f"attachment://{image_file.filename}")
-            print(image_file.filename)
         # Send the message
         await ctx.send(embed=embed, files=files)
-
 
 
     @commands.Cog.listener()
