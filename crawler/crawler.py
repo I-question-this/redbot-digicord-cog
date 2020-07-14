@@ -151,7 +151,7 @@ def parse_digivolutions_from(table:bs4.element.Tag) -> list:
     list:
         List of Digimon that can evolve into the this Digimon
     """
-    from_list   = list()
+    from_list = list()
     if (not check_empty_table(table)):
         row = table.findAll('tr')[1]
         for d in table.findAll('div'):
