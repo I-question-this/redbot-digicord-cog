@@ -7,7 +7,7 @@ import time
 import json
 
 
-LOG = logging.getLogger('digicord.crawler')
+LOG = logging.getLogger('red.digicord.crawler')
 COURTESY_MS = 2000 # Time in ms between HTTP GET requests
 
 
