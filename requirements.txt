@@ -5,3 +5,4 @@ Red-DiscordBot==3.3.5
 requests==2.24.0
 beautifulsoup4=4.9.1
 wget=3.2
+enlighten=1.6.0

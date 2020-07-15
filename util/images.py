@@ -3,10 +3,11 @@ import logging
 import time
 import json
 import os
+import enlighten
 
 
-logging.basicConfig(level=logging.DEBUG)
 LOG = logging.getLogger('red.digicord.images')
+logging.basicConfig(level=logging.DEBUG)
 COURTESY_MS = 2000 # Time in ms between requests
 # Directory definitions
 FILE_DIR    = os.path.dirname(os.path.abspath(__file__))
@@ -30,6 +31,7 @@ def get_image(url:str, img_path:str) -> bool:
         True if download success, else False.
     """
     LOG.debug(f'Downloading {img_path} from {url}')
+    # Remove file if it exists
     if (os.path.isfile(img_path)):
         LOG.debug(f'Found file at {img_path} - removing')
         os.remove(img_path)
@@ -73,16 +75,24 @@ if __name__ == '__main__':
     """Download sprite and field images from database entries
     """
     database        = json.load(open('database.json'))
+    progress_man    = enlighten.get_manager()
+    progress_bar    = progress_man.counter(total=2*len(database),
+            desc='Images', unit='img')
     first_download  = True
     for digimon in database:
         if (not first_download):
             time.sleep(COURTESY_MS / 1000)
         first_download = False
+        # Get file paths for images
         sprite_path = get_sprite_path(digimon['species_number'])
         field_path  = get_field_path(digimon['species_number'])
+        # Download sprite image
+        progress_bar.update()
         get_image(digimon['sprite_url'], sprite_path)
         time.sleep(COURTESY_MS / 1000)
+        # Download field image
+        progress_bar.update()
         get_image(digimon['field_url'], field_path)
-
+    progress_man.stop()
     LOG.debug('Done downloading images')
 
