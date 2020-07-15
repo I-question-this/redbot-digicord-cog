@@ -123,15 +123,12 @@ class Digicord(commands.Cog):
         if thumbnail_file is not None:
             files.append(thumbnail_file)
             embed.set_thumbnail(url=f"attachment://{thumbnail_file.filename}")
-            print(thumbnail_file.filename)
         # Attach image file if it exists
         if image_file is not None:
             files.append(image_file)
             embed.set_image(url=f"attachment://{image_file.filename}")
-            print(image_file.filename)
         # Send the message
         await ctx.send(embed=embed, files=files)
-
 
 
     @commands.Cog.listener()
@@ -286,6 +283,34 @@ class Digicord(commands.Cog):
         new_id = await self.new_id_number(user)
         caught_digimon[new_id] = digi.to_dict()
         await self._conf.user(user).digimon.set(caught_digimon)
+
+    
+    async def set_digimon_nickname(self, user:discord.User, digimon_id:int,
+            nickname:str):
+        """Sets the nickname of the Digimon
+        
+        Parameters
+        ----------
+        user: discord.User
+            The user to register the Digimon to.
+        digimon_id: id
+            The id of the Digimon to rename.
+        nickname: str
+            The new nickname for the Digimon
+        """
+        # It's saved as a string in the JSON config file
+        digimon_id = str(digimon_id)
+        caught_digimon = await self._conf.user(user).digimon()
+        if caught_digimon.get(digimon_id, None) is None:
+            raise UnknownDigimonIdNumber(user, digimon_id)
+        else:
+            ind = Individual.from_dict(caught_digimon[digimon_id])
+            old_name = ind.nickname
+            ind.nickname = nickname
+            caught_digimon[digimon_id] = ind.to_dict()
+            await self._conf.user(user).digimon.set(caught_digimon)
+            LOG.info(f"{user.id} changed Digimon {digimon_id} "\
+                    f"nickname from {old_name} to {nickname}")
 
 
     async def delete_digimon(self, user:discord.User, digimon_id:int):
@@ -493,13 +518,7 @@ class Digicord(commands.Cog):
 
     @digimon.command(name="delete")
     async def delete(self, ctx: commands.Context):
-        """Deletes the currently selected Digimon for the user calling this command.
-        
-        Parameters
-        ----------
-        digimon_id: int
-            The id of the Digimon to select.
-        """
+        """Deletes the currently selected Digimon for the user calling this command."""
         # Check that the User has a selected Digimon
         selected_digimon_id = await self._conf.user(ctx.author).selected_digimon()
         if selected_digimon_id is None:
@@ -552,6 +571,51 @@ class Digicord(commands.Cog):
             LOG.exception(f"No such id {selected_digimon_id} for user "\
                 f"{ctx.author.id}")
             title="Deletion Failed"
+            description=f"{ctx.author.mention}: No such Digimon with that"\
+                    " ID exists"
+            await self._embed_msg(ctx, title, description)
+    
+
+    @digimon.command(name="set_nickname")
+    async def set_nickname(self, ctx: commands.Context, nickname:str):
+        """Changes the nickname of the selected Digimon.
+        Parameters
+        ----------
+        nickname: str
+            The new nickname of the Digimon.
+        """
+        # Check that the User has a selected Digimon
+        selected_digimon_id = await self._conf.user(ctx.author).selected_digimon()
+        if selected_digimon_id is None:
+            # Check that they have Digimon
+            caught_digimon = await self._conf.user(ctx.author).digimon()
+            if len(caught_digimon) == 0:
+                # They have no Digimon
+                title = "Not Applicable"
+                description = f"{ctx.author.mention}: You have no Digimon"
+                await self._embed_msg(ctx, title, description)
+                # There's nothing left to do for them
+                return
+            else:
+                # They didn't pick one, so let's quit
+                title = "No Digimon Selected"
+                description = f"{ctx.author.mention}: You have not selected a "\
+                        "Digimon. Please do so with the select command first."
+                await self._embed_msg(ctx, title, description)
+                # There's nothing left to do for them
+                return
+        try:
+            # Rename Digimon
+            await self.set_digimon_nickname(ctx.author, selected_digimon_id, 
+                    nickname)
+            # Inform user
+            title = "Nickname Change Successful"
+            description = f"{ctx.author.mention} Changed to {nickname}"
+            await self._embed_msg(ctx, title, description)
+        except UnknownDigimonIdNumber:
+            LOG.exception(f"No such id {selected_digimon_id} for user "\
+                f"{ctx.author.id}")
+            title="Nickname Change Failed"
             description=f"{ctx.author.mention}: No such Digimon with that"\
                     " ID exists"
             await self._embed_msg(ctx, title, description)
