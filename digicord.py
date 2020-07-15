@@ -43,7 +43,7 @@ def sprite_path(species_number:int) -> str:
     str:
         The file path for the sprite image.
     """
-    return os.path.join(SPRITES_DIR, f"sprite-{species_number}.png")
+    return os.path.join(SPRITES_DIR, f"sprite-{species_number:03d}.png")
 
 
 def field_path(species_number:int):
@@ -57,7 +57,7 @@ def field_path(species_number:int):
     str:
         The file path for the field image.
     """
-    return os.path.join(FIELD_DIR, f"field-{species_number}.png")
+    return os.path.join(FIELD_DIR, f"field-{species_number:03d}.png")
 
 
 
