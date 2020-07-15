@@ -8,6 +8,7 @@ import json
 
 
 LOG = logging.getLogger('red.digicord.crawler')
+logging.basicConfig(level=logging.DEBUG)
 COURTESY_MS = 2000 # Time in ms between HTTP GET requests
 
 
@@ -197,14 +198,19 @@ def check_empty_table(table:bs4.element.Tag) -> bool:
     return table.findAll('td')[1].text == 'N/A'
 
 
-if __name__ == '__main__':
-    """Scrape/crawl from base_url and store info into JSON file
+def web_crawl(base_url:str) -> list:
+    """Scrape/crawl from base_url and store info in a list
+    Parameters
+    ----------
+    base_url: str
+        Base URL for crawling starting point
+    Returns
+    -------
+    list:
+        List of dicts containing Digimon info
     """
-    # Initialize empty database list
+    LOG.debug(f'Starting crawling at {base_url}')
     database = []
-    logging.basicConfig(level=logging.DEBUG)
-    base_url = 'http://digidb.io/digimon-list/'
-    LOG.info(f'Starting crawling at {base_url}')
     # Fetch base url content
     base_page = simple_get(base_url)
     if (base_page == None):
@@ -212,7 +218,7 @@ if __name__ == '__main__':
         exit(1)
     base_page = BeautifulSoup(base_page, 'html.parser')
     # Iterate through rows in the main table
-    for row in base_page.tbody.findAll('tr'):
+    for row in base_page.tbody.findAll('tr'): #[:2]: # 2 for testing purposes
         digimon = dict()
         row = list(row.children)
         # Parse fields from row
@@ -231,8 +237,31 @@ if __name__ == '__main__':
         digimon['field_url']        = parse_field_image(digimon_page)
         digimon['digivolutions']    = parse_digivolutions(digimon_page)
         database.append(digimon)
-    LOG.info('Saving database to JSON')
-    with open('database.json', 'w+') as f:
+    return database
+
+
+def save_database(database:list, database_path:str):
+    """Saves database into JSON file
+    Parameters
+    ----------
+    database: list
+        List of dicts containing Digimon info, to save
+    database_path: str
+        File location to save JSON file
+    """
+    LOG.debug('Saving database to JSON')
+    with open(database_path, 'w+') as f:
         json.dump(database, f, indent=4)
-    LOG.info('Done crawling')
+
+
+if __name__ == '__main__':
+    """Scrape/crawl from base_url and store info into JSON file
+    """
+    # Crawl for Digimon info
+    base_url = 'http://digidb.io/digimon-list/'
+    database = web_crawl(base_url)
+    # Save database to JSON
+    database_path = 'database.json'
+    save_database(database, database_path)
+    LOG.debug('Done crawling')
 
