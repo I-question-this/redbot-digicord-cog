@@ -5,7 +5,8 @@ import json
 import os
 
 
-LOG         = logging.getLogger('red.digicord.images')
+logging.basicConfig(level=logging.DEBUG)
+LOG = logging.getLogger('red.digicord.images')
 COURTESY_MS = 2000 # Time in ms between requests
 # Directory definitions
 FILE_DIR    = os.path.dirname(os.path.abspath(__file__))
@@ -29,6 +30,9 @@ def get_image(url:str, img_path:str) -> bool:
         True if download success, else False.
     """
     LOG.debug(f'Downloading {img_path} from {url}')
+    if (os.path.isfile(img_path)):
+        LOG.debug(f'Found file at {img_path} - removing')
+        os.remove(img_path)
     try:
         wget.download(url, img_path, bar=None)
         return True
@@ -68,7 +72,6 @@ def get_field_path(species_number:int, digits:int=3) -> str:
 if __name__ == '__main__':
     """Download sprite and field images from database entries
     """
-    LOG.setLevel(logging.DEBUG)
     database        = json.load(open('database.json'))
     first_download  = True
     for digimon in database:
