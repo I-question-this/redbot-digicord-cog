@@ -289,7 +289,7 @@ class Digicord(commands.Cog):
 
 
     async def delete_digimon(self, user:discord.User, digimon_id:int):
-        """Selects a Digimon as the "default" for operations.
+        """Deletes the given Digimon from the given user.
         
         Parameters
         ----------
@@ -493,7 +493,7 @@ class Digicord(commands.Cog):
 
     @digimon.command(name="delete")
     async def delete(self, ctx: commands.Context):
-        """Selects a Digimon as the "default" for operations.
+        """Deletes the currently selected Digimon for the user calling this command.
         
         Parameters
         ----------
