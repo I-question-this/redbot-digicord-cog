@@ -218,7 +218,7 @@ def web_crawl(base_url:str) -> list:
         exit(1)
     base_page = BeautifulSoup(base_page, 'html.parser')
     # Iterate through rows in the main table
-    for row in base_page.tbody.findAll('tr'): #[:2]: # 2 for testing purposes
+    for row in base_page.tbody.findAll('tr'):
         digimon = dict()
         row = list(row.children)
         # Parse fields from row
@@ -240,6 +240,45 @@ def web_crawl(base_url:str) -> list:
     return database
 
 
+def get_species_number_lut(database:list) -> dict:
+    """Create look-up table (LUT) for name -> species_number
+    Parameters
+    ----------
+    database: list
+        Database of Digimon
+    Returns
+    -------
+    dict
+        Dictionary LUT to convert name to species_number
+    """
+    lut = dict()
+    for digimon in database:
+        lut[digimon['name']] = digimon['species_number']
+    return lut
+
+
+def fix_digivolution(digimon:dict, species_number_lut:dict):
+    """Replace Digivolution names with species_numbers.
+    Note that this function takes advantage of dict mutability.
+    Parameters
+    ----------
+    digimon: dict
+        Holds data for a given Digimon.
+    species_number_lut: dict
+        LUT for name -> species_number
+    """
+    # Fix from field
+    from_species_numbers = list()
+    for name in digimon['digivolutions']['from']:
+        from_species_numbers = species_number_lut[name]
+    digimon['digivolutions']['from'] = from_species_numbers
+    # Fix to field
+    to_species_numbers = list()
+    for digi in digimon['digivolutions']['to']:
+        digi['species_number'] = species_number_lut[digi['name']]
+        del digi['name']
+
+
 def save_database(database:list, database_path:str):
     """Saves database into JSON file
     Parameters
@@ -254,12 +293,33 @@ def save_database(database:list, database_path:str):
         json.dump(database, f, indent=4)
 
 
+def load_database(database_path:str) -> list:
+    """Loads database from JSON file (for testing)
+    Parameters
+    ----------
+    database_path: str
+        File location to load JSON file from
+    Returns
+    -------
+    list:
+        List of dicts containing Digimon info
+    """
+    database = json.load(open(database_path))
+    return database
+
+
 if __name__ == '__main__':
     """Scrape/crawl from base_url and store info into JSON file
     """
     # Crawl for Digimon info
     base_url = 'http://digidb.io/digimon-list/'
     database = web_crawl(base_url)
+    # # TESTING - Load database
+    # database            = load_database('database.json')
+    # Correct Digivolution info from name to species_number
+    species_number_lut  = get_species_number_lut(database)
+    for digimon in database:
+        fix_digivolution(digimon, species_number_lut)
     # Save database to JSON
     database_path = 'database.json'
     save_database(database, database_path)
