@@ -411,7 +411,7 @@ class Digicord(commands.Cog):
 
 
     @digimon.command(name="info")
-    async def info(self, ctx: commands.Context):
+    async def info_command(self, ctx: commands.Context):
         """Displays information for the selected Digimon"""
         # Check that the User has a selected Digimon
         selected_digimon_id = await self._conf.user(ctx.author).selected_digimon()
@@ -524,7 +524,7 @@ class Digicord(commands.Cog):
             # Get a backup for logging
             ind, spec = await self.get_user_digimon(ctx.author, selected_digimon_id)
             # Ask for user confirmation
-            await self.info(ctx)
+            await self.info_command(ctx)
             info = await ctx.maybe_send_embed(f"{ctx.author.mention} "\
                     "Confirm Deletion")
 
