@@ -33,7 +33,7 @@ _DEFAULT_GUILD = {
     "current_digimon": None
 }
 _DEFAULT_USER = {
-    "digimon": {},
+    "digimon": [],
     "selected_digimon": None
 }
 
@@ -253,23 +253,6 @@ class Digicord(commands.Cog):
         """Digimon commands"""
 
 
-    async def new_id_number(self, user:discord.User) -> int:
-        """Returns the next id number to be used for a new Digimon
-        
-        Parameters
-        ----------
-        user: discord.User
-            The user to return this information for.
-
-        Returns
-        -------
-        int:
-            The new (max+1) id number to be used for a new Digimon
-        """
-        caught_digimon = await self._conf.user(user).digimon()
-        return str(len(caught_digimon) + 1)
-
-
     async def register_digimon(self, user:discord.User, digi:Individual):
         """Register a given Digimon to a given user.
         
@@ -281,8 +264,7 @@ class Digicord(commands.Cog):
             The Individual Digimon to register
         """
         caught_digimon = await self._conf.user(user).digimon()
-        new_id = await self.new_id_number(user)
-        caught_digimon[new_id] = digi.to_dict()
+        caught_digimon.append(digi.to_dict())
         await self._conf.user(user).digimon.set(caught_digimon)
 
     
@@ -332,15 +314,12 @@ class Digicord(commands.Cog):
            will be passed user input. Users of this function
            beware.
         """
-        # It's saved as a string in the JSON config file
-        digimon_id = str(digimon_id)
         caught_digimon = await self._conf.user(user).digimon()
-        if caught_digimon.get(digimon_id, None) is None:
-            raise UnknownDigimonIdNumber(user, digimon_id)
-        else:
+        try:
             del caught_digimon[digimon_id]
             await self._conf.user(user).digimon.set(caught_digimon)
-
+        except IndexError:
+            raise UnknownDigimonIdNumber(user, digimon_id)
 
 
     async def get_user_digimon(self, user:discord.User, digimon_id:int)\
@@ -368,16 +347,14 @@ class Digicord(commands.Cog):
            will be passed user input. Users of this function
            beware.
         """
-        # It's saved as a string in the JSON config file
-        digimon_id = str(digimon_id)
         caught_digimon = await self._conf.user(user).digimon()
-        ind_info = caught_digimon.get(digimon_id, None)
-        if ind_info is None:
-            raise UnknownDigimonIdNumber(user, digimon_id)
-        else:
+        try:
+            ind_info = caught_digimon[digimon_id]
             ind = Individual.from_dict(ind_info)
             spec = self.database.species_information(ind.species_number)
             return ind, spec
+        except IndexError:
+            raise UnknownDigimonIdNumber(user, digimon_id)
 
 
     @commands.command(name="catch")
@@ -502,9 +479,9 @@ class Digicord(commands.Cog):
             return
 
         # Get the ids for the page
-        all_digi_ids = sorted((int(d_id) for d_id in caught_digimon.keys()))
-        digimon_ids_to_display = all_digi_ids\
-                [(page_number-1)*max_on_page:page_number*max_on_page]
+        all_digi_ids = list(range(len(caught_digimon)))
+        digimon_ids_to_display = all_digi_ids \
+            [(page_number-1)*max_on_page:page_number*max_on_page]
 
         # Assembly information
         title = f"Owned Digimon: Page {page_number}"
