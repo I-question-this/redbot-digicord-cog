@@ -295,17 +295,13 @@ class Digicord(commands.Cog):
         ----------
         user: discord.User
             The user to register the Digimon to.
-        digimon_id: id
+        digimon_id: int
             The id of the Digimon to rename.
         nickname: str
             The new nickname for the Digimon
         """
-        # It's saved as a string in the JSON config file
-        digimon_id = str(digimon_id)
-        caught_digimon = await self._conf.user(user).digimon()
-        if caught_digimon.get(digimon_id, None) is None:
-            raise UnknownDigimonIdNumber(user, digimon_id)
-        else:
+        try:
+            caught_digimon = await self._conf.user(user).digimon()
             ind = Individual.from_dict(caught_digimon[digimon_id])
             old_name = ind.nickname
             ind.nickname = nickname
@@ -313,6 +309,8 @@ class Digicord(commands.Cog):
             await self._conf.user(user).digimon.set(caught_digimon)
             LOG.info(f"{user.id} changed Digimon {digimon_id} "\
                     f"nickname from {old_name} to {nickname}")
+        except IndexError:
+            raise UnknownDigimonIdNumber(user, digimon_id)
 
 
     async def delete_digimon(self, user:discord.User, digimon_id:int):
