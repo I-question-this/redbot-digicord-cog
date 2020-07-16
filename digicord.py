@@ -77,7 +77,7 @@ class NoCaughtDigimon(Exception):
         self.user = user
 
     def __str__(self):
-        return f"No caught Digimon id for user {user.id}"
+        return f"No caught Digimon id for user {self.user.id}"
 
 
 
@@ -86,7 +86,7 @@ class NoSelectedDigimon(Exception):
         self.user = user
 
     def __str__(self):
-        return f"No selected Digimon for user {user.id}"
+        return f"No selected Digimon for user {self.user.id}"
 
 
 
@@ -97,7 +97,7 @@ class UnknownDigimonIdNumber(Exception):
 
     def __str__(self):
         return f"Unknown Digimon id number {self.id_number} " \
-                f"for user {user.id}"
+                f"for user {self.user.id}"
 
 
 
@@ -480,8 +480,8 @@ class Digicord(commands.Cog):
             description=f"{ctx.author.mention}: Selected "\
                     f"{ind.nickname}({spec.name})"
             await self._embed_msg(ctx, title, description)
-        except UnknownDigimonIdNumber:
-            LOG.error(f"No such id {id} for user {ctx.author.id}")
+        except UnknownDigimonIdNumber as exp:
+            LOG.exception(exp)
             title="Selection Failed"
             description=f"{ctx.author.mention}: No such Digimon with that"\
                     " ID exists"
@@ -506,17 +506,14 @@ class Digicord(commands.Cog):
                     thumbnail_file=discord.File(sprite_path(spec.\
                             species_number))
                   )
-        except UnknownDigimonIdNumber:
-            LOG.exception(f"No such id {selected_digimon_id} for user "\
-                f"{ctx.author.id}")
+        except UnknownDigimonIdNumber as exp:
+            LOG.exception(exp)
             title="Get Info Failed"
             description=f"{ctx.author.mention}: No such Digimon with that"\
                     " ID exists"
             await self._embed_msg(ctx, title, description)
-        except NoCaughtDigimon:
-            LOG.info(f"User {ctx.author.id} has no Digimon.")
-        except NoSelectedDigimon:
-            LOG.info(f"User {ctx.author.id} has no selected Digimon.")
+        except (NoCaughtDigimon, NoSelectedDigimon) as exp:
+            LOG.info(exp)
 
 
 
@@ -600,17 +597,14 @@ class Digicord(commands.Cog):
             description=f"{ctx.author.mention}: Deleted "\
                     f"{selected_digimon_id}: {ind.nickname}({spec.name})"
             await self._embed_msg(ctx, title, description)
-        except UnknownDigimonIdNumber:
-            LOG.exception(f"No such id {selected_digimon_id} for user "\
-                f"{ctx.author.id}")
+        except UnknownDigimonIdNumber as exp:
+            LOG.exception(exp)
             title="Deletion Failed"
             description=f"{ctx.author.mention}: No such Digimon with that"\
                     " ID exists"
             await self._embed_msg(ctx, title, description)
-        except NoCaughtDigimon:
-            LOG.info(f"User {ctx.author.id} has no Digimon.")
-        except NoSelectedDigimon:
-            LOG.info(f"User {ctx.author.id} has no selected Digimon.")
+        except (NoCaughtDigimon, NoSelectedDigimon) as exp:
+            LOG.info(exp)
     
 
     @digimon.command(name="set_nickname")
@@ -632,16 +626,13 @@ class Digicord(commands.Cog):
             title = "Nickname Change Successful"
             description = f"{ctx.author.mention} Changed to {nickname}"
             await self._embed_msg(ctx, title, description)
-        except UnknownDigimonIdNumber:
-            LOG.exception(f"No such id {selected_digimon_id} for user "\
-                f"{ctx.author.id}")
+        except UnknownDigimonIdNumber as exp:
+            LOG.exception(exp)
             title="Nickname Change Failed"
             description=f"{ctx.author.mention}: No such Digimon with that"\
                     " ID exists"
             await self._embed_msg(ctx, title, description)
-        except NoCaughtDigimon:
-            LOG.info(f"User {ctx.author.id} has no Digimon.")
-        except NoSelectedDigimon:
-            LOG.info(f"User {ctx.author.id} has no selected Digimon.")
+        except (NoCaughtDigimon, NoSelectedDigimon) as exp:
+            LOG.info(exp)
 
 
