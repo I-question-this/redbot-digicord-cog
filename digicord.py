@@ -1,3 +1,4 @@
+import contextlib
 import discord
 import logging
 import os
@@ -6,6 +7,15 @@ random.seed()
 from redbot.core import checks, commands, Config
 from redbot.core.data_manager import cog_data_path
 from redbot.core.bot import Red
+from redbot.core.utils.menus import (
+    DEFAULT_CONTROLS,
+    close_menu,
+    menu,
+    next_page,
+    prev_page,
+    start_adding_reactions,
+)
+from redbot.core.utils.predicates import MessagePredicate, ReactionPredicate
 import shutil
 
 from .database import Database
@@ -303,6 +313,35 @@ class Digicord(commands.Cog):
                     f"nickname from {old_name} to {nickname}")
 
 
+    async def delete_digimon(self, user:discord.User, digimon_id:int):
+        """Deletes the given Digimon from the given user.
+        
+        Parameters
+        ----------
+        user: discord.User
+            The user to delete a digimon from.
+        digimon_id: int
+            The id of the Digimon to delete.
+        Raises
+        ------
+        UnknownDigimonIdNumber
+           Indicates the given digimon_id does not exist in
+           reference to this user.
+           This is expect to happen since this function
+           will be passed user input. Users of this function
+           beware.
+        """
+        # It's saved as a string in the JSON config file
+        digimon_id = str(digimon_id)
+        caught_digimon = await self._conf.user(user).digimon()
+        if caught_digimon.get(digimon_id, None) is None:
+            raise UnknownDigimonIdNumber(user, digimon_id)
+        else:
+            del caught_digimon[digimon_id]
+            await self._conf.user(user).digimon.set(caught_digimon)
+
+
+
     async def get_user_digimon(self, user:discord.User, digimon_id:int)\
         -> (Individual, Species):
         """Register a given Digimon to a given user.
@@ -397,7 +436,7 @@ class Digicord(commands.Cog):
 
 
     @digimon.command(name="info")
-    async def info(self, ctx: commands.Context):
+    async def info_command(self, ctx: commands.Context):
         """Displays information for the selected Digimon"""
         # Check that the User has a selected Digimon
         selected_digimon_id = await self._conf.user(ctx.author).selected_digimon()
@@ -476,6 +515,67 @@ class Digicord(commands.Cog):
         description += f"Page {page_number} of {maximum_page_number}"
         await self._embed_msg(ctx, title, description)
 
+
+    @digimon.command(name="delete")
+    async def delete(self, ctx: commands.Context):
+        """Deletes the currently selected Digimon for the user calling this command."""
+        # Check that the User has a selected Digimon
+        selected_digimon_id = await self._conf.user(ctx.author).selected_digimon()
+        if selected_digimon_id is None:
+            # Check that they have Digimon
+            caught_digimon = await self._conf.user(ctx.author).digimon()
+            if len(caught_digimon) == 0:
+                # They have no Digimon
+                title = "Not Applicable"
+                description = f"{ctx.author.mention}: You have no Digimon"
+                await self._embed_msg(ctx, title, description)
+                # There's nothing left to do for them
+                return
+            else:
+                # They didn't pick one, but this irreversible.
+                title = "No Digimon Selected"
+                description = f"{ctx.author.mention}: You have not selected a "\
+                        "Digimon. Please do so with the select command first."
+                await self._embed_msg(ctx, title, description)
+                # There's nothing left to do for them
+                return
+        try:
+            # Get a backup for logging
+            ind, spec = await self.get_user_digimon(ctx.author, selected_digimon_id)
+            # Ask for user confirmation
+            await self.info_command(ctx)
+            info = await ctx.maybe_send_embed(f"{ctx.author.mention} "\
+                    "Confirm Deletion")
+
+            start_adding_reactions(info, ReactionPredicate.YES_OR_NO_EMOJIS)
+            pred = ReactionPredicate.yes_or_no(info, ctx.author)
+            await ctx.bot.wait_for("reaction_add", check=pred)
+
+            # If user said no
+            if not pred.result:
+                with contextlib.suppress(discord.HTTPException):
+                    await info.delete()
+                await self._embed_msg(ctx, title="",
+                        description=f"{ctx.author.mention}: Deletion canceled")
+                return
+            # Delete the digimon
+            await self.delete_digimon(ctx.author, selected_digimon_id)
+            await self._conf.user(ctx.author).selected_digimon.set(None)
+            LOG.info(f"{ctx.author.id} deleted {selected_digimon_id}: "\
+                    f"{ind.to_dict()}")
+            title="Deletion Successful"
+            description=f"{ctx.author.mention}: Deleted "\
+                    f"{selected_digimon_id}: {ind.nickname}({spec.name})"
+            await self._embed_msg(ctx, title, description)
+        except UnknownDigimonIdNumber:
+            LOG.exception(f"No such id {selected_digimon_id} for user "\
+                f"{ctx.author.id}")
+            title="Deletion Failed"
+            description=f"{ctx.author.mention}: No such Digimon with that"\
+                    " ID exists"
+            await self._embed_msg(ctx, title, description)
+    
+
     @digimon.command(name="set_nickname")
     async def set_nickname(self, ctx: commands.Context, nickname:str):
         """Changes the nickname of the selected Digimon.
@@ -504,7 +604,6 @@ class Digicord(commands.Cog):
                 await self._embed_msg(ctx, title, description)
                 # There's nothing left to do for them
                 return
-
         try:
             # Rename Digimon
             await self.set_digimon_nickname(ctx.author, selected_digimon_id, 
@@ -520,6 +619,4 @@ class Digicord(commands.Cog):
             description=f"{ctx.author.mention}: No such Digimon with that"\
                     " ID exists"
             await self._embed_msg(ctx, title, description)
-
-
 
