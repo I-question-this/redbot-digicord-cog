@@ -2,6 +2,7 @@
 """Database Class"""
 import logging
 import random
+import json
 random.seed()
 
 from .digimon import Individual, Species, Stage
@@ -21,11 +22,18 @@ class UnknownSpeciesNumber(Exception):
 
 class Database:
     def __init__(self, file_path:str):
-        self._diginfo = {}
+        self._diginfo = dict()
         # Read in database
-        self._diginfo[1] = Species("Kuramon", 1, Stage.BABY)
+        database = json.load(open('util/database.json'))
+        for entry in database:
+            self._diginfo[entry['species_number']] = Species(
+                    entry['name'],
+                    entry['species_number'],
+                    Stage.from_string(entry['stage'])
+            )
 
-    
+
+
     def random_digimon(self) -> Individual:
         """Returns a random Digimon with a random level
         Returns
