@@ -72,13 +72,32 @@ def field_path(species_number:int):
 
 
 
+class NoCaughtDigimon(Exception):
+    def __init__(self, user:discord.User):
+        self.user = user
+
+    def __str__(self):
+        return f"No caught Digimon id for user {self.user.id}"
+
+
+
+class NoSelectedDigimon(Exception):
+    def __init__(self, user:discord.User):
+        self.user = user
+
+    def __str__(self):
+        return f"No selected Digimon for user {self.user.id}"
+
+
+
 class UnknownDigimonIdNumber(Exception):
     def __init__(self, user:discord.User, id_number:int):
         self.id_number = id_number
+        self.user = user
 
     def __str__(self):
         return f"Unknown Digimon id number {self.id_number} " \
-                f"for user {user.id}"
+                f"for user {self.user.id}"
 
 
 
@@ -357,6 +376,62 @@ class Digicord(commands.Cog):
             raise UnknownDigimonIdNumber(user, digimon_id)
 
 
+    async def get_user_selected_digimon(self, user:discord.User, 
+            msg:discord.abc.Messageable=None) -> (int, Individual, Species):
+        """Register a given Digimon to a given user.
+        
+        Parameters
+        ----------
+        user: discord.User
+            The user to get the selected Digimon of.
+        msg: discord.abc.Messageable
+            Default is None, but if a Messagable object then
+            the user will be informed either of their lack of
+            Digimon or their lack of a selected Digimon.
+        Returns
+        -------
+        int:
+            The user id number for the Digimon.
+        Individual:
+            The Digimon, at least it's Individual information
+        Species:
+            The species information of the selected Digimon
+        Raises
+        ------
+        NoCaughtDigimon
+            Indicates that a user has no Digimon caught.
+        NoSelectedDigimon
+            Indicates that a user has no selected Digimon.
+        """
+        # Check that the User has a selected Digimon
+        selected_digimon_id = await self._conf.user(user).\
+                selected_digimon()
+        if selected_digimon_id is None:
+            # Check that they have Digimon
+            caught_digimon = await self._conf.user(user).digimon()
+            if len(caught_digimon) == 0:
+                if msg is not None:
+                    # They have no Digimon
+                    title = "Not Applicable"
+                    description = f"{user.mention}: You have no "\
+                            "Digimon"
+                    await self._embed_msg(msg, title, description)
+                raise NoCaughtDigimon(user)
+            else:
+                if msg is not None:
+                    # They didn't select one, so let's quit
+                    title = "No Digimon Selected"
+                    description = f"{user.mention}: You have "\
+                            "not selected a Digimon. Please do so with the "\
+                            "select command first."
+                    await self._embed_msg(msg, title, description)
+                raise NoSelectedDigimon(user)
+        # Return selected Digimon 
+        ind, spec = await self.get_user_digimon(user,
+                selected_digimon_id)
+        return selected_digimon_id, ind, spec
+
+
     @commands.command(name="catch")
     async def catch(self, ctx: commands.Context, guess: str):
         """Attempt to catch a Digimon via guessing it's name.
@@ -405,8 +480,8 @@ class Digicord(commands.Cog):
             description=f"{ctx.author.mention}: Selected "\
                     f"{ind.nickname}({spec.name})"
             await self._embed_msg(ctx, title, description)
-        except UnknownDigimonIdNumber:
-            LOG.error(f"No such id {id} for user {ctx.author.id}")
+        except UnknownDigimonIdNumber as exp:
+            LOG.exception(exp)
             title="Selection Failed"
             description=f"{ctx.author.mention}: No such Digimon with that"\
                     " ID exists"
@@ -416,35 +491,31 @@ class Digicord(commands.Cog):
     @digimon.command(name="info")
     async def info_command(self, ctx: commands.Context):
         """Displays information for the selected Digimon"""
-        # Check that the User has a selected Digimon
-        selected_digimon_id = await self._conf.user(ctx.author).selected_digimon()
-        if selected_digimon_id is None:
-            # Check that they have Digimon
-            caught_digimon = await self._conf.user(ctx.author).digimon()
-            if len(caught_digimon) == 0:
-                # They have no Digimon
-                title = "Not Applicable"
-                description = f"{ctx.author.mention}: You have no Digimon"
-                await self._embed_msg(ctx, title, description)
-                # There's nothing left to do for them
-                return
-            else:
-                # Set the selected Digimon as first in the list
-                selected_digimon_id = min(caught_digimon.keys())
-                await self._conf.user(ctx.author).selected_digimon\
-                        .set(selected_digimon_id)
+        try:
+            # Get user selected Digimon
+            selected_digimon_id, ind, spec = await self.\
+                    get_user_selected_digimon(ctx.author, ctx)
+            # Display that information
+            title = f"{ind.nickname}({spec.name})"
+            description = \
+                    f"Stage: {spec.stage}\n" \
+                    f"Level: {ind.level}\n"
+            await self._embed_msg(ctx, title, description, 
+                    image_file=discord.File(field_path(spec.\
+                            species_number)),
+                    thumbnail_file=discord.File(sprite_path(spec.\
+                            species_number))
+                  )
+        except UnknownDigimonIdNumber as exp:
+            LOG.exception(exp)
+            title="Get Info Failed"
+            description=f"{ctx.author.mention}: No such Digimon with that"\
+                    " ID exists"
+            await self._embed_msg(ctx, title, description)
+        except (NoCaughtDigimon, NoSelectedDigimon) as exp:
+            LOG.info(exp)
 
-        # Get all the information
-        ind, spec = await self.get_user_digimon(ctx.author, selected_digimon_id)
-        # Display that information
-        title = f"{ind.nickname}({spec.name})"
-        description = \
-                f"Stage: {spec.stage}\n" \
-                f"Level: {ind.level}\n"
-        await self._embed_msg(ctx, title, description, 
-                image_file=discord.File(field_path(spec.species_number)),
-                thumbnail_file=discord.File(sprite_path(spec.species_number))
-              )
+
 
 
     @digimon.command(name="list")
@@ -497,29 +568,10 @@ class Digicord(commands.Cog):
     @digimon.command(name="delete")
     async def delete(self, ctx: commands.Context):
         """Deletes the currently selected Digimon for the user calling this command."""
-        # Check that the User has a selected Digimon
-        selected_digimon_id = await self._conf.user(ctx.author).selected_digimon()
-        if selected_digimon_id is None:
-            # Check that they have Digimon
-            caught_digimon = await self._conf.user(ctx.author).digimon()
-            if len(caught_digimon) == 0:
-                # They have no Digimon
-                title = "Not Applicable"
-                description = f"{ctx.author.mention}: You have no Digimon"
-                await self._embed_msg(ctx, title, description)
-                # There's nothing left to do for them
-                return
-            else:
-                # They didn't pick one, but this irreversible.
-                title = "No Digimon Selected"
-                description = f"{ctx.author.mention}: You have not selected a "\
-                        "Digimon. Please do so with the select command first."
-                await self._embed_msg(ctx, title, description)
-                # There's nothing left to do for them
-                return
         try:
-            # Get a backup for logging
-            ind, spec = await self.get_user_digimon(ctx.author, selected_digimon_id)
+            # Get user selected Digimon
+            selected_digimon_id, ind, spec = await self.\
+                    get_user_selected_digimon(ctx.author, ctx)
             # Ask for user confirmation
             await self.info_command(ctx)
             info = await ctx.maybe_send_embed(f"{ctx.author.mention} "\
@@ -545,13 +597,14 @@ class Digicord(commands.Cog):
             description=f"{ctx.author.mention}: Deleted "\
                     f"{selected_digimon_id}: {ind.nickname}({spec.name})"
             await self._embed_msg(ctx, title, description)
-        except UnknownDigimonIdNumber:
-            LOG.exception(f"No such id {selected_digimon_id} for user "\
-                f"{ctx.author.id}")
+        except UnknownDigimonIdNumber as exp:
+            LOG.exception(exp)
             title="Deletion Failed"
             description=f"{ctx.author.mention}: No such Digimon with that"\
                     " ID exists"
             await self._embed_msg(ctx, title, description)
+        except (NoCaughtDigimon, NoSelectedDigimon) as exp:
+            LOG.info(exp)
     
 
     @digimon.command(name="set_nickname")
@@ -562,39 +615,24 @@ class Digicord(commands.Cog):
         nickname: str
             The new nickname of the Digimon.
         """
-        # Check that the User has a selected Digimon
-        selected_digimon_id = await self._conf.user(ctx.author).selected_digimon()
-        if selected_digimon_id is None:
-            # Check that they have Digimon
-            caught_digimon = await self._conf.user(ctx.author).digimon()
-            if len(caught_digimon) == 0:
-                # They have no Digimon
-                title = "Not Applicable"
-                description = f"{ctx.author.mention}: You have no Digimon"
-                await self._embed_msg(ctx, title, description)
-                # There's nothing left to do for them
-                return
-            else:
-                # They didn't pick one, so let's quit
-                title = "No Digimon Selected"
-                description = f"{ctx.author.mention}: You have not selected a "\
-                        "Digimon. Please do so with the select command first."
-                await self._embed_msg(ctx, title, description)
-                # There's nothing left to do for them
-                return
         try:
+            # Get user selected Digimon
+            selected_digimon_id, ind, spec = await self.\
+                    get_user_selected_digimon(ctx.author, ctx)
             # Rename Digimon
-            await self.set_digimon_nickname(ctx.author, selected_digimon_id, 
-                    nickname)
+            await self.set_digimon_nickname(ctx.author,
+                    selected_digimon_id, nickname)
             # Inform user
             title = "Nickname Change Successful"
             description = f"{ctx.author.mention} Changed to {nickname}"
             await self._embed_msg(ctx, title, description)
-        except UnknownDigimonIdNumber:
-            LOG.exception(f"No such id {selected_digimon_id} for user "\
-                f"{ctx.author.id}")
+        except UnknownDigimonIdNumber as exp:
+            LOG.exception(exp)
             title="Nickname Change Failed"
             description=f"{ctx.author.mention}: No such Digimon with that"\
                     " ID exists"
             await self._embed_msg(ctx, title, description)
+        except (NoCaughtDigimon, NoSelectedDigimon) as exp:
+            LOG.info(exp)
+
 
