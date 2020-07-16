@@ -1,6 +1,8 @@
 # These are the main requirements, but they have several other dependencies
-Red-DiscordBot==3.3.5
+Red-DiscordBot==3.3.10
 
 # Crawler requirements
 requests==2.24.0
-beautifulsoup4=4.9.1
+beautifulsoup4==4.9.1
+wget==3.2
+enlighten==1.6.0
