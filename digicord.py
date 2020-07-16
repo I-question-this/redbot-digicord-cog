@@ -2,6 +2,7 @@ import contextlib
 import discord
 import logging
 import os
+import math
 import random
 random.seed()
 from redbot.core import checks, commands, Config
@@ -490,7 +491,7 @@ class Digicord(commands.Cog):
             return
 
         # Check that it's a valid page number 
-        maximum_page_number = int(len(caught_digimon) / max_on_page) + 1
+        maximum_page_number = math.ceil(len(caught_digimon) / max_on_page)
         if not (1 <= page_number <= maximum_page_number):
             # They have no Digimon
             title = "Not a Valid Page Number"
