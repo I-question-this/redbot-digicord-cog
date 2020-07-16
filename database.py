@@ -24,7 +24,6 @@ class Database:
     def __init__(self, file_path:str):
         self._diginfo = dict()
         # Read in database
-        # self._diginfo[1] = Species("Kuramon", 1, Stage.BABY)
         database = json.load(open('util/database.json'))
         for entry in database:
             self._diginfo[entry['species_number']] = Species(
