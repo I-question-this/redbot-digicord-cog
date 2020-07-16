@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup
 import logging
 import time
 import json
+import os
 
 
 LOG = logging.getLogger('red.digicord.crawler')
@@ -321,7 +322,8 @@ if __name__ == '__main__':
     for digimon in database:
         fix_digivolution(digimon, species_number_lut)
     # Save database to JSON
-    database_path = 'database.json'
+    database_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+        'database.json')
     save_database(database, database_path)
     LOG.debug('Done crawling')
 
