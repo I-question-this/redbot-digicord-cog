@@ -74,7 +74,9 @@ def get_field_path(species_number:int, digits:int=3) -> str:
 if __name__ == '__main__':
     """Download sprite and field images from database entries
     """
-    database        = json.load(open('database.json'))
+    database_path   = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+            'database.json')
+    database        = json.load(open(database_path))
     progress_man    = enlighten.get_manager()
     progress_bar    = progress_man.counter(total=2*len(database),
             desc='Images', unit='img')
