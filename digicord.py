@@ -57,7 +57,7 @@ def sprite_path(species_number:int) -> str:
     return os.path.join(SPRITES_DIR, f"sprite-{species_number:03d}.png")
 
 
-def field_path(species_number:int):
+def field_path(species_number:int) -> str:
     """Returns the file path for the field image given a Digimon number.
     Parameters
     ----------
@@ -152,7 +152,7 @@ class Digicord(commands.Cog):
 
 
     @commands.Cog.listener()
-    async def on_message(self, message:discord.Message):
+    async def on_message(self, message:discord.Message) -> None:
         # Make sure it's not a bot, ourself, or a DM
         if isinstance(message.channel, discord.abc.PrivateChannel):
             return
@@ -168,7 +168,7 @@ class Digicord(commands.Cog):
             await self.spawn_digimon(message.channel)
 
 
-    async def spawn_digimon(self, channel:discord.TextChannel):
+    async def spawn_digimon(self, channel:discord.TextChannel) -> None:
         """Spawns a random Digimon.
         Parameters
         ----------
@@ -207,9 +207,10 @@ class Digicord(commands.Cog):
     @commands.guild_only()
     @commands.admin()
     @admin.command(name="set_spawn_channel")
-    async def set_spawn_channel(self, ctx: commands.Context, channel:discord.TextChannel=None):
-        """Sets which channel the bot spawns Digimon in. If no argument is given 
-            then Digimon will spawn in any channel.
+    async def set_spawn_channel(self, ctx: commands.Context, 
+            channel:discord.TextChannel=None) -> None:
+        """Sets which channel the bot spawns Digimon in. If no argument is 
+            given then Digimon will spawn in any channel.
         Parameters
         ----------
         channel: discord.TextChannel
@@ -238,7 +239,8 @@ class Digicord(commands.Cog):
 
     @checks.is_owner()
     @admin.command(name="set_spawn_chance")
-    async def set_spawn_chance(self, ctx: commands.Context, spawn_chance:int):
+    async def set_spawn_chance(self, ctx: commands.Context, spawn_chance:int)\
+            -> None:
         """Sets the spawn chance.
 
         Parameters
@@ -253,14 +255,15 @@ class Digicord(commands.Cog):
             description=f"Spawn chance set to {spawn_chance}%"
         else:
             title="Set Spawn Chance: Failure"
-            description=f"Spawn chance has to be (0,100], which is not {spawn_chance}"
+            description=f"Spawn chance has to be (0,100], which is not "\
+                    f"{spawn_chance}"
         await self._embed_msg(ctx, title, description)
 
 
     @commands.guild_only()
     @commands.is_owner()
     @admin.command(name="spawn_digimon")
-    async def command_spawn_digimon(self, ctx: commands.Context):
+    async def command_spawn_digimon(self, ctx: commands.Context) -> None:
         """Spawns a random Digimon in the current server.
         """
         await self.spawn_digimon(ctx)
@@ -272,7 +275,8 @@ class Digicord(commands.Cog):
         """Digimon commands"""
 
 
-    async def register_digimon(self, user:discord.User, digi:Individual):
+    async def register_digimon(self, user:discord.User, digi:Individual)\
+            -> None:
         """Register a given Digimon to a given user.
         
         Parameters
@@ -288,7 +292,7 @@ class Digicord(commands.Cog):
 
     
     async def set_digimon_nickname(self, user:discord.User, digimon_id:int,
-            nickname:str):
+            nickname:str) -> None:
         """Sets the nickname of the Digimon
         
         Parameters
@@ -313,7 +317,7 @@ class Digicord(commands.Cog):
             raise UnknownDigimonIdNumber(user, digimon_id)
 
 
-    async def delete_digimon(self, user:discord.User, digimon_id:int):
+    async def delete_digimon(self, user:discord.User, digimon_id:int) -> None:
         """Deletes the given Digimon from the given user.
         
         Parameters
@@ -431,7 +435,7 @@ class Digicord(commands.Cog):
 
 
     @commands.command(name="catch")
-    async def catch(self, ctx: commands.Context, guess: str):
+    async def catch(self, ctx: commands.Context, guess: str) -> None:
         """Attempt to catch a Digimon via guessing it's name.
         
         Parameters
@@ -462,7 +466,7 @@ class Digicord(commands.Cog):
 
 
     @digimon.command(name="select")
-    async def select(self, ctx: commands.Context, digimon_id:int):
+    async def select(self, ctx: commands.Context, digimon_id:int) -> None:
         """Selects a Digimon as the "default" for operations.
         
         Parameters
@@ -487,7 +491,7 @@ class Digicord(commands.Cog):
 
 
     @digimon.command(name="info")
-    async def info_command(self, ctx: commands.Context):
+    async def info_command(self, ctx: commands.Context) -> None:
         """Displays information for the selected Digimon"""
         try:
             # Get user selected Digimon
@@ -520,7 +524,7 @@ class Digicord(commands.Cog):
 
 
     @digimon.command(name="list")
-    async def list(self, ctx: commands.Context, page_number:int=1):
+    async def list(self, ctx: commands.Context, page_number:int=1) -> None:
         """Lists the Digimon owned by the User.
         
         Parameters
@@ -567,7 +571,7 @@ class Digicord(commands.Cog):
 
 
     @digimon.command(name="delete")
-    async def delete(self, ctx: commands.Context):
+    async def delete(self, ctx: commands.Context) -> None:
         """Deletes the currently selected Digimon for the user calling this command."""
         try:
             # Get user selected Digimon
@@ -612,7 +616,7 @@ class Digicord(commands.Cog):
     
 
     @digimon.command(name="set_nickname")
-    async def set_nickname(self, ctx: commands.Context, nickname:str):
+    async def set_nickname(self, ctx: commands.Context, nickname:str) -> None:
         """Changes the nickname of the selected Digimon.
         Parameters
         ----------
