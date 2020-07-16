@@ -325,7 +325,7 @@ if __name__ == '__main__':
     # Correct Digivolution info from name to species_number
     species_number_lut = get_species_number_lut(database)
     digivolve_prog_bar = PROGRESS_MAN.counter(total=len(species_number_lut),
-            desc='Digimon', unit='dgm')
+            desc='Digivolutions', unit='dgm')
     for digimon in database:
         digivolve_prog_bar.update()
         fix_digivolution(digimon, species_number_lut)
