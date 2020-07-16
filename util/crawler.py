@@ -6,11 +6,13 @@ import logging
 import time
 import json
 import os
+import enlighten
 
 
 LOG = logging.getLogger('red.digicord.crawler')
 logging.basicConfig(level=logging.DEBUG)
-COURTESY_MS = 2000 # Time in ms between HTTP GET requests
+PROGRESS_MAN    = enlighten.get_manager()
+COURTESY_MS     = 2000 # Time in ms between HTTP GET requests
 
 
 def simple_get(url:str) -> bytes:
@@ -218,10 +220,15 @@ def web_crawl(base_url:str) -> list:
         LOG.error(f'Failed to GET from {base_url}')
         exit(1)
     base_page = BeautifulSoup(base_page, 'html.parser')
+    # Set up progress bar for crawler
+    rows            = base_page.tbody.findAll('tr')
+    crawl_prog_bar  = PROGRESS_MAN.counter(total = len(rows), desc='Crawling',
+            unit='pages')
     # Iterate through rows in the main table
-    for row in base_page.tbody.findAll('tr'):
+    for row in rows:
         digimon = dict()
         row = list(row.children)
+        crawl_prog_bar.update()
         # Parse fields from row
         digimon['name']             = parse_name(row)
         digimon['species_number']   = parse_species_number(row)
@@ -315,15 +322,17 @@ if __name__ == '__main__':
     # Crawl for Digimon info
     base_url = 'http://digidb.io/digimon-list/'
     database = web_crawl(base_url)
-    # # TESTING - Load database
-    # database            = load_database('database.json')
     # Correct Digivolution info from name to species_number
-    species_number_lut  = get_species_number_lut(database)
+    species_number_lut = get_species_number_lut(database)
+    digivolve_prog_bar = PROGRESS_MAN.counter(total=len(species_number_lut),
+            desc='Digivolutions', unit='dgm')
     for digimon in database:
+        digivolve_prog_bar.update()
         fix_digivolution(digimon, species_number_lut)
     # Save database to JSON
     database_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
         'database.json')
     save_database(database, database_path)
+    PROGRESS_MAN.stop()
     LOG.debug('Done crawling')
 
