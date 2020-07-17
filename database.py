@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Database Class"""
 import logging
+import os
 import random
 import json
 random.seed()
@@ -9,6 +10,11 @@ from .digimon import Individual, Species, Stage
 
 
 LOG = logging.getLogger("red.digicord")
+
+
+FILE_DIR = os.path.dirname(os.path.abspath(__file__))
+UTIL_DIR = os.path.join(FILE_DIR, "util")
+DATABASE_FILE = os.path.join(UTIL_DIR, "database.json")
 
 
 class UnknownSpeciesNumber(Exception):
@@ -24,7 +30,7 @@ class Database:
     def __init__(self, file_path:str):
         self._diginfo = dict()
         # Read in database
-        database = json.load(open('util/database.json'))
+        database = json.load(open(DATABASE_FILE))
         for entry in database:
             self._diginfo[entry['species_number']] = Species(
                     entry['name'],
