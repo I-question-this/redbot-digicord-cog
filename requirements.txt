@@ -2,7 +2,7 @@
 Red-DiscordBot==3.3.10
 
 # Crawler requirements
-requests==2.24.0
+requests==2.31.0
 beautifulsoup4==4.9.1
 wget==3.2
 enlighten==1.6.0
