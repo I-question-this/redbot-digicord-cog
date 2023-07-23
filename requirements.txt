@@ -1,5 +1,5 @@
 # These are the main requirements, but they have several other dependencies
-Red-DiscordBot==3.3.10
+Red-DiscordBot==3.5.1
 
 # Crawler requirements
 requests==2.24.0
